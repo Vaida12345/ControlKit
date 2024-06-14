@@ -10,6 +10,7 @@ import CoreGraphics
 
 public struct Screen {
     
+    @inlinable
     public static func capture() -> CGImage? {
         let mainDisplayId = CGMainDisplayID()
         if let imageRef = CGDisplayCreateImage(mainDisplayId) {

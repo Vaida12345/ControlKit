@@ -13,6 +13,7 @@ import CoreGraphics
 public struct Mouse {
     
     /// Move the mouse to the specified location.
+    @inlinable
     public static func move(to position: CGPoint) {
         CGEvent(mouseEventSource: nil,
                 mouseType: .mouseMoved,
@@ -23,7 +24,8 @@ public struct Mouse {
         // Purpose: To observe and filter low-level input events before they are processed by the HID system.
     }
     
-    /// Use the left button to click the mouse at the specified location
+    /// Use the left button to click the mouse at the specified location.
+    @inlinable
     public static func tap(at position: CGPoint) {
         CGEvent(mouseEventSource: nil,
                 mouseType: .leftMouseDown,
@@ -38,7 +40,8 @@ public struct Mouse {
             .post(tap: .cghidEventTap)
     }
     
-    /// Use the right button to click the mouse at the specified location
+    /// Use the right button to click the mouse at the specified location.
+    @inlinable
     public static func controlTap(at position: CGPoint) {
         CGEvent(mouseEventSource: nil,
                 mouseType: .rightMouseDown,
