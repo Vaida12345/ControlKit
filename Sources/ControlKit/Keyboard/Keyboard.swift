@@ -26,11 +26,10 @@ public struct Keyboard {
         CGEvent(keyboardEventSource: nil, virtualKey: key.keyCode, keyDown: true)?
             .post(tap: .cghidEventTap)
         
-        try await Task.sleep(for: interval)
-        
         CGEvent(keyboardEventSource: nil, virtualKey: key.keyCode, keyDown: false)?
             .post(tap: .cghidEventTap)
         
+        try await Task.sleep(for: interval)
     }
     
     /// Press a key
@@ -44,11 +43,11 @@ public struct Keyboard {
         keyDownEvent?.flags = flags
         keyDownEvent?.post(tap: .cgAnnotatedSessionEventTap)
         
-        try await Task.sleep(for: interval)
-        
         let keyUpEvent = CGEvent(keyboardEventSource: nil, virtualKey: key.keyCode, keyDown: false)
         keyUpEvent?.flags = flags
         keyUpEvent?.post(tap: .cgAnnotatedSessionEventTap)
+        
+        try await Task.sleep(for: interval)
     }
     
 }

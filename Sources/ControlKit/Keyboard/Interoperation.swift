@@ -8,7 +8,6 @@
 import Foundation
 
 
-@available(macOS 13, *)
 extension Keyboard {
     
     public struct Interoperation: StringInterpolationProtocol, ExpressibleByStringInterpolation {
