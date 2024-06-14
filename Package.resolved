@@ -1,0 +1,15 @@
+{
+  "originHash" : "5b2b0f68808e2a7bc83560d988cb7b088e4fc7636c41275fd8a517f304c9a464",
+  "pins" : [
+    {
+      "identity" : "graphicskit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Vaida12345/GraphicsKit.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "3de42c8020bf7d5cd7b8dc17563cb9e189a6c5a4"
+      }
+    }
+  ],
+  "version" : 3
+}
