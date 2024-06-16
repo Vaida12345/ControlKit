@@ -22,6 +22,7 @@ extension Screen {
         /// The bounds of a display in the global display coordinate space
         ///
         /// The bounds of the display, expressed as a rectangle in the global display coordinate space (relative to the upper-left corner of the main display).
+        @inlinable
         public var bounds: CGRect {
             CGDisplayBounds(id)
         }
@@ -29,46 +30,55 @@ extension Screen {
         /// The physical screen size in millimeters.
         ///
         /// If Extended Display Identification Data (EDID) for the display device is not available, the size is estimated based on the device width and height in pixels from `CGDisplayBounds(_:)`, with an assumed resolution of 2.835 pixels/mm or 72 dpi, a reasonable guess for displays predating EDID support.
+        @inlinable
         public var physicalSize: CGSize? {
             CGDisplayScreenSize(id)
         }
         
         /// Returns information about a display’s current configuration.
+        @inlinable
         public var displayMode: CGDisplayMode? {
             CGDisplayCopyDisplayMode(id)
         }
         
         /// Returns the color space for a display.
+        @inlinable
         public var colorSpace: CGColorSpace? {
             CGDisplayCopyColorSpace(id)
         }
         
         /// Returns a Boolean value indicating whether a display is active.
+        @inlinable
         public var isActive: Bool {
             CGDisplayIsActive(id) == 1
         }
         
         /// Returns a Boolean value indicating whether a display is sleeping (and is therefore not drawable).
+        @inlinable
         public var isAsleep: Bool {
             CGDisplayIsAsleep(id) == 1
         }
         
         /// Returns a Boolean value indicating whether a display is built-in, such as the internal display in portable systems.
+        @inlinable
         public var isBuiltin: Bool {
             CGDisplayIsBuiltin(id) == 1
         }
         
         /// Returns a Boolean value indicating whether a display is the main display.
+        @inlinable
         public var isMain: Bool {
             CGDisplayIsMain(id) == 1
         }
         
         /// Returns a Boolean value indicating whether a display is connected or online.
+        @inlinable
         public var isOnline: Bool {
             CGDisplayIsOnline(id) == 1
         }
         
         /// Returns a Boolean value indicating whether a display is running in a stereo graphics mode.
+        @inlinable
         public var isStereo: Bool {
             CGDisplayIsStereo(id) == 1
         }
@@ -81,6 +91,7 @@ extension Screen {
         /// - If I/O Kit can identify the monitor, the product ID code for the monitor is returned.
         /// - If I/O Kit can’t identify the monitor, kDisplayProductIDGeneric is returned.
         /// - If no monitor is connected, `nil` is returned.
+        @inlinable
         public var modelNumber: Int? {
             let number = CGDisplayModelNumber(id)
             if number == 0xFFFFFFFF { return nil }
@@ -88,6 +99,7 @@ extension Screen {
         }
         
         /// Returns the display size in pixel units.
+        @inlinable
         public var size: CGSize {
             CGSize(width: CGDisplayPixelsWide(id), height: CGDisplayPixelsHigh(id))
         }
@@ -108,6 +120,7 @@ extension Screen {
         /// - Returns: The rotation angle of the display in degrees, or 0 if the display is not valid.
         ///
         /// This function returns the rotation angle of a display in a clockwise direction. For example, if the specified display is rotated clockwise 90 degrees, then this function returns 90.0. After a 90-degree clockwise rotation, the physical bottom of the display is on the left side and the physical top is on the right side.
+        @inlinable
         public var rotation: Double {
             CGDisplayRotation(id)
         }
@@ -127,6 +140,7 @@ extension Screen {
         /// - If no monitor is connected to the display hardware, 0xFFFFFFFF is returned.
         ///
         /// Note that a serial number is meaningful only in conjunction with a specific vendor and product or model.
+        @inlinable
         public var serialNumber: Int {
             get throws(GetSerialNumberError) {
                 let serialNumber = CGDisplaySerialNumber(id)
@@ -145,6 +159,7 @@ extension Screen {
         /// The logical unit number represents a particular node in the I/O Kit device tree associated with the display’s framebuffer.
         ///
         /// For a particular hardware configuration, this value will not change when the attached monitor is changed. The number will change, though, if the I/O Kit device tree changes, for example, when hardware is reconfigured, drivers are replaced, or significant changes occur to I/O Kit. Therefore keep in mind that this number may vary across login sessions.
+        @inlinable
         public var unitNumber: Int {
             Int(CGDisplayUnitNumber(id))
         }
@@ -156,6 +171,7 @@ extension Screen {
         ///
         /// - Parameters:
         ///   - target: The coordinates of a point in local display space. The origin is the upper-left corner of the specified display.
+        @inlinable
         public func moveCursor(to target: CGPoint) throws {
             let error = CGDisplayMoveCursorToPoint(id, target)
             guard error == .success else { throw error }

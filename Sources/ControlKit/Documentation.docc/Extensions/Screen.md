@@ -22,6 +22,17 @@ for window in windows.filter({ $0.owner.name == "Finder" }) {
 }
 ```
 
+### Controlling and inspecting window
+
+Using in conjunction with ``ApplicationServices/AXUIElement``, you could control & inspect your ``Window``.
+
+For example, This would close the first window of Finder.
+
+```swift
+let windows = try Screen.windows().first { $0.owner.name == "Finder" }!
+try windows.control.closeButton.press()
+```
+
 ## Topics
 
 ### Working with Window

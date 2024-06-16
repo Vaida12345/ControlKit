@@ -75,7 +75,7 @@ public struct Screen {
     ///   - options: The options describing which window dictionaries to return. Typical options let you return dictionaries for all windows or for windows above or below the window specified in the relativeToWindow parameter.
     ///
     /// Generating the system windows is a relatively expensive operation. As always, you should profile your code and adjust your usage of this function appropriately for your needs.
-    public static func windows(options: CGWindowListOption = [.excludeDesktopElements]) throws -> [Window] {
+    public static func windows(options: CGWindowListOption = [.excludeDesktopElements, .optionOnScreenOnly]) throws -> [Window] {
         let windowListInfo = CGWindowListCopyWindowInfo(options, kCGNullWindowID) as NSArray?
         
         // Check if we got the window list

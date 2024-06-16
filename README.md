@@ -7,6 +7,38 @@ Control & monitor your mac using swift code.
 try await Keyboard.press("hello", modifiers: .shift)
 ```
 
+## Examples
+
+### Move a mouse
+
+This would move the cursor to the 100px and 100px position to the top left of the screen
+        
+```swift
+Mouse.tap(at: CGPoint(x: 100, y: 100))
+```
+        
+### Capture a window
+
+This would capture every window of Finder and save it into a desktop folder.
+
+```swift
+let windows = try Screen.windows()
+
+for window in windows.filter({ $0.owner.name == "Finder" }) {
+    let image = Screen.capture(window)
+    try image?.write(to: .desktopDirectory.appending(path: "Captures/\(window.description).png"))
+}
+```
+
+### Control a window
+
+ This would move the first window of safari that opens ChatGPT, and moves it to the top left corner.
+ 
+ ```swift
+ let windows = try Screen.windows().first { $0.owner.name == "Safari" && $0.name!.contains("ChatGPT") }!
+ try windows.control.move(to: .zero)
+ ```
+
 
 ## Getting Started
 

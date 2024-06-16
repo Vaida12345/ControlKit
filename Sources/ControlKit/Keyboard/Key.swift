@@ -77,7 +77,7 @@ public struct Key: ExpressibleByStringLiteral, ExpressibleByIntegerLiteral, Send
         "M" : 0x2E,
         "." : 0x2F,
         "\t": 0x30,
-        "*" : 0x31,
+        " " : 0x31,
         "~" : 0x32,
         "`" : 0x32
     ]

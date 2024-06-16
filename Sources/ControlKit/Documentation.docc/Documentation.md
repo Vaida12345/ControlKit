@@ -55,6 +55,15 @@ All of these structures provides `static` functions to interact.
         }
         ```
     }
+    
+    @Tab("Window") {
+        This would move the first window of safari that opens ChatGPT, and moves it to the top left corner.
+        
+        ```swift
+        let windows = try Screen.windows().first { $0.owner.name == "Safari" && $0.name!.contains("ChatGPT") }!
+        try windows.control.move(to: .zero)
+        ```
+    }
 }
 
 
@@ -82,6 +91,14 @@ https://github.com/Vaida12345/ControlKit
 - ``Keyboard``
 - ``Mouse``
 - ``Screen``
+
+### Windows Controls
+
+- ``ApplicationServices/AXUIElement``
+
+### Working with Terminal 
+
+- ``execute(_:)``
 
 ### Imported from GraphicsKit
 
