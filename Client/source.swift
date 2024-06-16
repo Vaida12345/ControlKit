@@ -8,6 +8,7 @@ public struct MainApp {
     
     public static func main() async throws {
         
+        try print(Screen.displays(of: .active))
         
     }
     
