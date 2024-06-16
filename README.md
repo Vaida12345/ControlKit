@@ -24,3 +24,8 @@ You can add this framework as a dependency to your Xcode project by clicking Fil
 ```
 https://github.com/Vaida12345/ControlKit
 ```
+## Documentation
+
+The documentation is included in the package as DocC.
+<img width="1587" alt="DocC" src="https://github.com/Vaida12345/ControlKit/assets/91354917/501460f4-2cc6-4207-be8a-151b76d23e73">
+
