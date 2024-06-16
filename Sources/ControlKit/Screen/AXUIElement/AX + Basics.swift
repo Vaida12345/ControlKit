@@ -179,6 +179,9 @@ public extension AXUIElement {
     }
     
     /// Returns the child at the given index.
+    ///
+    /// `element[0]` would be equivalent to `element.children[0]`
+    @inlinable
     subscript(_ i: Int) -> AXUIElement {
         get throws {
             let children = try self.children
