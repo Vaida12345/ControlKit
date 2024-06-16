@@ -10,6 +10,7 @@ import Foundation
 
 extension Keyboard {
     
+    /// An interoperation to key inputs.
     public struct Interoperation: StringInterpolationProtocol, ExpressibleByStringInterpolation {
         
         fileprivate enum Word {

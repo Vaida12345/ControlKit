@@ -15,12 +15,12 @@ public struct Screen {
     /// Captures the current screen.
     ///
     /// - Parameters:
-    ///   - displayID: The display id to capture. The default value is the display on screen.
+    ///   - display: The display to capture. The default value is the display on screen.
     ///   - target: The rect of interest
     ///
     /// - Experiment: On a benchmark with `-O`, it takes 50ms on average to capture. That is around 200 frames per second. It took around 8% of the CPU to capture non-stop.
     ///
-    /// To obtain a list of displays, use ``displays``.
+    /// To obtain a list of displays, use ``displays(of:maxDisplays:)``.
     @inlinable
     public static func capture(_ display: Display = .main, target: CGRect? = nil) -> CGImage? {
         if let target,
@@ -86,18 +86,17 @@ public struct Screen {
         return windowList.map(Window.init)
     }
     
-    /// Captures the image of a screen, window, or a region. It is commonly used for taking screenshots of specific windows or areas of the display.
+    /// Captures the image of a window.
     ///
     /// - Parameters:
     ///   - window: This parameter can be used to specify a particular window for capturing, or can be `nil` if the listOption does not require a specific window ID.
-    ///   - screenBounds: A CGRect that specifies the bounding box for the image to be captured. This can define a specific area of the screen or the entire screen.
     ///   - listOption: Specifies the scope of windows to include in the image.
     ///   - imageOption: Specifies the image rendering options. See discussion for more.
     ///
     /// For `imageOption`, you could pass:
     /// - `boundsIgnoreFraming` for ignoring the shadow.
     ///
-    /// - Note: A window obtained ``windows()`` does not guarantee such window is capture-able.
+    /// - Note: A window obtained ``windows(options:)`` does not guarantee such window is capture-able.
     public static func capture(
         _ window: Window? = nil,
         listOption: CGWindowListOption = .optionIncludingWindow,

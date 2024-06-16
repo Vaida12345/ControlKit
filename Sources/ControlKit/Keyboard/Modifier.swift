@@ -11,6 +11,7 @@ import CoreGraphics
 
 extension Keyboard {
     
+    /// The modifier key state at the time an event is created.
     public struct Modifier: OptionSet, Sendable, CaseIterable {
         
         public var rawValue: UInt8

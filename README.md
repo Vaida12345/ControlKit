@@ -1,7 +1,7 @@
 
 # Control Kit
 
-Control your mac using swift code.
+Control & monitor your mac using swift code.
 
 ```swift
 try await Keyboard.press("hello", modifiers: .shift)

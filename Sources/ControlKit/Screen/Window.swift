@@ -14,7 +14,7 @@ extension Screen {
     /// A window on screen.
     ///
     /// > Creation:
-    /// > To create a window instance, use ``Screen/windows``
+    /// > To create a window instance, use ``Screen/windows(options:)``
     public struct Window: Sendable, CustomStringConvertible {
         
         /// kCGWindowName
