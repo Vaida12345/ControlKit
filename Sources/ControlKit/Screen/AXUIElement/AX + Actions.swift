@@ -28,7 +28,7 @@ public extension AXUIElement {
         try self.perform(kAXCancelAction)
     }
     
-    /// Confirm action for an element.
+    /// Confirm action for an element. This often represents the default action by pressing ⏎.
     @inlinable
     func confirm() throws(AXError) {
         try self.perform(kAXConfirmAction)
@@ -65,6 +65,8 @@ public extension AXUIElement {
     }
     
     /// Show default UI action for an element.
+    ///
+    /// This could represent the UI by clicking on it.
     @inlinable
     func showDefaultUI() throws(AXError) {
         try self.perform(kAXShowDefaultUIAction)

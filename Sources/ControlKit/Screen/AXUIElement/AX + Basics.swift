@@ -87,7 +87,7 @@ public extension AXUIElement {
     
     /// A description of the element.
     @inlinable
-    var description: CFString {
+    var elementDescription: CFString {
         get throws(AXError) {
             try self.attribute(for: kAXDescriptionAttribute, as: CFString.self)
         }
@@ -104,8 +104,8 @@ public extension AXUIElement {
     /// A unique identifier for the element.
     @inlinable
     var identifier: String {
-        get {
-            try! self.attribute(for: kAXIdentifierAttribute, as: String.self)
+        get throws {
+            try self.attribute(for: kAXIdentifierAttribute, as: String.self)
         }
     }
     
@@ -114,6 +114,76 @@ public extension AXUIElement {
     var isMain: Bool {
         get throws(AXError) {
             try self.attribute(for: kAXMainAttribute, as: Bool.self)
+        }
+    }
+    
+    /// Whether the element is minimized.
+    @inlinable
+    var minimized: Bool {
+        get throws(AXError) {
+            try self.attribute(for: kAXMinimizedAttribute, as: Bool.self)
+        }
+    }
+    
+    
+    /// The close button for the element.
+    @inlinable
+    var closeButton: AXUIElement {
+        get throws(AXError) {
+            try self.attribute(for: kAXCloseButtonAttribute, as: AXUIElement.self)
+        }
+    }
+    
+    /// The zoom button for the element.
+    @inlinable
+    var zoomButton: AXUIElement {
+        get throws(AXError) {
+            try self.attribute(for: kAXZoomButtonAttribute, as: AXUIElement.self)
+        }
+    }
+    
+    /// The minimize button for the element.
+    @inlinable
+    var minimizeButton: AXUIElement {
+        get throws(AXError) {
+            try self.attribute(for: kAXMinimizeButtonAttribute, as: AXUIElement.self)
+        }
+    }
+    
+    /// The toolbar button for the element.
+    @inlinable
+    var toolbarButton: AXUIElement {
+        get throws(AXError) {
+            try self.attribute(for: kAXToolbarButtonAttribute, as: AXUIElement.self)
+        }
+    }
+    
+    /// The full screen button for the element.
+    @inlinable
+    var fullScreenButton: AXUIElement {
+        get throws(AXError) {
+            try self.attribute(for: kAXFullScreenButtonAttribute, as: AXUIElement.self)
+        }
+    }
+    
+    /// The child elements.
+    ///
+    /// This would only return the direct children.
+    ///
+    /// - Note: Using ``debugDescription``, you can view the tree of an element.
+    @inlinable
+    var children: [AXUIElement] {
+        get throws(AXError) {
+            try self.attribute(for: kAXChildrenAttribute, as: [AXUIElement].self)
+        }
+    }
+    
+    /// Returns the child at the given index.
+    subscript(_ i: Int) -> AXUIElement {
+        get throws {
+            let children = try self.children
+            precondition(children.count > i, "Index out of range. The children are \(children.map(\.description).joined(separator: ", "))")
+            return children[i]
         }
     }
     
@@ -139,17 +209,29 @@ public extension AXUIElement {
     ///
     /// This method would move this control to the front.
     @inlinable
-    func setFocus() throws(AXError) {
+    func focus() throws(AXError) {
         try set(attribute: true, for: kAXMainAttribute)
     }
     
     /// Sets focus to the control.
     ///
     /// This method would move this control to the front.
-    @available(*, deprecated, renamed: "setFocus")
+    @available(*, deprecated, renamed: "focus")
     @inlinable
     func bringToFont() throws(AXError) {
-        try self.setFocus()
+        try self.focus()
+    }
+    
+    /// Minimize the window.
+    @inlinable
+    func minimize(_ isMinimized: Bool = true) throws(AXError) {
+        try set(attribute: isMinimized, for: kAXMinimizedAttribute)
+    }
+    
+    /// Sets the value to the element, as observed by ``value``.
+    @inlinable
+    func setValue(_ value: Any) throws(AXError) {
+        try set(attribute: value as CFTypeRef, for: kAXValueAttribute)
     }
     
 }

@@ -14,7 +14,7 @@ public extension AXUIElement {
     ///
     /// The value of an accessibility object is user-modifiable and represents the setting of the associated user interface element, such as the contents of an editable text field or the position of a scroller.
     @inlinable
-    var value: CFNumber {
+    var value: CFTypeRef {
         get throws(AXError) {
             try self.attribute(for: kAXValueAttribute)
         }
@@ -24,7 +24,7 @@ public extension AXUIElement {
     ///
     /// This attribute is used only in conjunction with the AXValue attribute.
     @inlinable
-    var minValue: CFNumber {
+    var minValue: CFTypeRef {
         get throws(AXError) {
             try self.attribute(for: kAXMinValueAttribute)
         }
@@ -34,7 +34,7 @@ public extension AXUIElement {
     ///
     /// This attribute is used only in conjunction with the AXValue attribute.
     @inlinable
-    var maxValue: CFNumber {
+    var maxValue: CFTypeRef {
         get throws(AXError) {
             try self.attribute(for: kAXMaxValueAttribute)
         }
@@ -58,27 +58,19 @@ public extension AXUIElement {
         }
     }
     
-    /// The child elements.
-    @inlinable
-    var children: CFArray {
-        get throws(AXError) {
-            try self.attribute(for: kAXChildrenAttribute, as: CFArray.self)
-        }
-    }
-    
     /// The selected child elements.
     @inlinable
-    var selectedChildren: CFArray {
+    var selectedChildren: [AXUIElement] {
         get throws(AXError) {
-            try self.attribute(for: kAXSelectedChildrenAttribute, as: CFArray.self)
+            try self.attribute(for: kAXSelectedChildrenAttribute, as: [AXUIElement].self)
         }
     }
     
     /// The visible child elements.
     @inlinable
-    var visibleChildren: CFArray {
+    var visibleChildren: [AXUIElement] {
         get throws(AXError) {
-            try self.attribute(for: kAXVisibleChildrenAttribute, as: CFArray.self)
+            try self.attribute(for: kAXVisibleChildrenAttribute, as: [AXUIElement].self)
         }
     }
     
@@ -134,9 +126,9 @@ public extension AXUIElement {
     
     /// Elements linked to this one.
     @inlinable
-    var linkedUIElements: CFArray {
+    var linkedUIElements: [AXUIElement] {
         get throws(AXError) {
-            try self.attribute(for: kAXLinkedUIElementsAttribute, as: CFArray.self)
+            try self.attribute(for: kAXLinkedUIElementsAttribute, as: [AXUIElement].self)
         }
     }
     
@@ -271,9 +263,9 @@ public extension AXUIElement {
     
     /// Elements that share focus with this element.
     @inlinable
-    var sharedFocusElements: CFArray {
+    var sharedFocusElements: [AXUIElement] {
         get throws(AXError) {
-            try self.attribute(for: kAXSharedFocusElementsAttribute, as: CFArray.self)
+            try self.attribute(for: kAXSharedFocusElementsAttribute, as: [AXUIElement].self)
         }
     }
     
@@ -381,54 +373,6 @@ public extension AXUIElement {
         }
     }
     
-    /// The close button for the element.
-    @inlinable
-    var closeButton: AXUIElement {
-        get throws(AXError) {
-            try self.attribute(for: kAXCloseButtonAttribute, as: AXUIElement.self)
-        }
-    }
-    
-    /// The zoom button for the element.
-    @inlinable
-    var zoomButton: AXUIElement {
-        get throws(AXError) {
-            try self.attribute(for: kAXZoomButtonAttribute, as: AXUIElement.self)
-        }
-    }
-    
-    /// The minimize button for the element.
-    @inlinable
-    var minimizeButton: AXUIElement {
-        get throws(AXError) {
-            try self.attribute(for: kAXMinimizeButtonAttribute, as: AXUIElement.self)
-        }
-    }
-    
-    /// The toolbar button for the element.
-    @inlinable
-    var toolbarButton: AXUIElement {
-        get throws(AXError) {
-            try self.attribute(for: kAXToolbarButtonAttribute, as: AXUIElement.self)
-        }
-    }
-    
-    /// The full screen button for the element.
-    @inlinable
-    var fullScreenButton: AXUIElement {
-        get throws(AXError) {
-            try self.attribute(for: kAXFullScreenButtonAttribute, as: AXUIElement.self)
-        }
-    }
-    
-    /// Whether the element is minimized.
-    @inlinable
-    var minimized: Bool {
-        get throws(AXError) {
-            try self.attribute(for: kAXMinimizedAttribute, as: Bool.self)
-        }
-    }
-    
     /// The extras menu bar associated with this element.
     @inlinable
     var extrasMenuBar: AXUIElement {
@@ -455,9 +399,9 @@ public extension AXUIElement {
     
     /// The cells in the element that are visible.
     @inlinable
-    var visibleCells: CFArray {
+    var visibleCells: [AXUIElement] {
         get throws(AXError) {
-            try self.attribute(for: kAXVisibleCellsAttribute, as: CFArray.self)
+            try self.attribute(for: kAXVisibleCellsAttribute, as: [AXUIElement].self)
         }
     }
     

@@ -33,7 +33,8 @@ This extension can be used to inspect and control ``Screen/Window``.
 
 ### Controls
 
-- ``setFocus()``
+- ``focus()``
+- ``minimize(_:)``
 - ``bringToFont()``
 
 ### Working with positions
@@ -47,6 +48,14 @@ This extension can be used to inspect and control ``Screen/Window``.
 ### Controls
 
 - ``press()``
+- ``confirm()``
+
+### Children
+
+The child elements, you could perform actions on them, such as ``press()``.
+
+- ``closeButton``
+- ``children``
 
 ### Roles
 

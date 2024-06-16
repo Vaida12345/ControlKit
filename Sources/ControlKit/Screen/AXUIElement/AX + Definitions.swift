@@ -63,6 +63,71 @@ public extension AXUIElement {
     }
 }
 
+
+extension AXUIElement: @retroactive CustomStringConvertible {
+    
+    public var description: String {
+        var description = ""
+        if let title = try? self.title {
+            description += title + " "
+        }
+        
+        description += "(\(self.role)"
+        
+        if let role = try? self.subrole {
+            description += ", \(role))"
+        } else {
+            description += ")"
+        }
+        
+        if let identifier = try? self.identifier {
+            description += " " + identifier
+        }
+        
+        return description
+    }
+    
+}
+
+extension AXUIElement: @retroactive CustomDebugStringConvertible {
+    
+    public var debugDescription: String {
+        String.recursiveDescription(of: self, children: { try? $0.children }, description: { $0.description })
+    }
+    
+}
+
+private extension String {
+    
+    static private func printChild<T>(_ child: T, header: String, into target: inout String, isLast: Bool, children: (T) -> [T]?, description: (T) -> String) {
+        let childDescription = recursiveDescription(of: child, children: children, description: description)
+        let components = childDescription.components(separatedBy: "\n").filter({ !$0.isEmpty })
+        if let first = components.first {
+            target += "\(header)\(first)\n"
+        }
+        for line in components.dropFirst() {
+            target += "\(isLast ? " " : "│") \(line)\n"
+        }
+    }
+    
+    static func recursiveDescription<T>(of target: T, children: (T) -> [T]?, description: (T) -> String) -> String {
+        
+        var value = "─ " + description(target) + "\n"
+        if let _children = children(target) {
+            for child in _children.dropLast() {
+                printChild(child, header: "├", into: &value, isLast: false, children: children, description: description)
+            }
+            if let last = _children.last {
+                printChild(last, header: "╰", into: &value, isLast: true, children: children, description: description)
+            }
+        }
+        return value
+        
+    }
+    
+}
+
+
 extension AXError: @retroactive Error, @retroactive CustomStringConvertible {
     
     public var description: String {
