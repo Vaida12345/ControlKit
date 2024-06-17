@@ -8,7 +8,7 @@
 import CoreGraphics
 import Foundation
 import AVFoundation
-import Synchronization
+import MetalKit
 
 
 /// Different to `ScreenCaptureKit`, The methods works well in executables without identities.
@@ -208,6 +208,8 @@ public struct Screen {
                 kCVPixelBufferWidthKey           as String: videoWidth                as AnyObject,
                 kCVPixelBufferHeightKey          as String: videoHeight               as AnyObject
             ]
+            print(videoWidth, videoHeight)
+            
             nonisolated(unsafe)
             let pixelBufferAdaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: assetWriterVideoInput, sourcePixelBufferAttributes: sourceBufferAttributes)
             
@@ -220,12 +222,11 @@ public struct Screen {
             // -- Set video parameters
             let date = Date()
             
-            // -- Add images to video
-            let drawCGRect = CGRect(x: 0, y: 0, width: videoWidth, height: videoHeight)
-            let defaultColorSpace = CGColorSpaceCreateDeviceRGB()
-            
             nonisolated(unsafe)
             let produce = produce
+            
+            nonisolated(unsafe)
+            let converter = MetalImageConverter()
             
             assetWriterVideoInput.requestMediaDataWhenReady(on: mediaQueue) { [unowned self] in
                 guard assetWriterVideoInput.isReadyForMoreMediaData else { return } // go on waiting
@@ -241,22 +242,13 @@ public struct Screen {
                 nonisolated(unsafe)
                 var pixelBuffer: CVPixelBuffer! = nil
                 
-                nonisolated(unsafe)
-                var context: CGContext! = nil
-                
                 preparePixelQueue.async {
                     let pixelBufferPool = pixelBufferAdaptor.pixelBufferPool!
                     
                     CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, pixelBufferPool, pixelBufferPointer)
                     pixelBuffer = pixelBufferPointer.pointee!
-                    
-                    CVPixelBufferLockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: CVOptionFlags(0)))
-                    
-                    let pixelData = CVPixelBufferGetBaseAddress(pixelBuffer)
-                    
-                    // Create CGBitmapContext
-                    context = CGContext(data: pixelData, width: Int(size.width), height: Int(size.height), bitsPerComponent: 8, bytesPerRow: CVPixelBufferGetBytesPerRow(pixelBuffer), space: colorSpace ?? defaultColorSpace, bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)!
                 }
+                print(-2)
                 
                 // Produce
                 var _frame = produce()
@@ -264,17 +256,23 @@ public struct Screen {
                     _frame = produce()
                 }
                 let frame = _frame!
-
+                
+                print(-1)
+                
                 // Draw image into context
                 let presentationTime = CMTime(seconds: date.distance(to: Date()), preferredTimescale: 120)
                 
                 preparePixelQueue.sync { } // wait for the queue
                 
-                context.draw(frame, in: drawCGRect) // takes most time
-                CVPixelBufferUnlockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: CVOptionFlags(0)))
+                print(0)
                 
-                pixelBufferAdaptor.append(pixelBuffer, withPresentationTime: presentationTime)
+                converter.convertImageToPixelBuffer(frame, pixelBuffer: pixelBuffer)
+                
+                assert(assetWriter.status == .writing)
+                print(assetWriter.error)
+                assert(pixelBufferAdaptor.append(pixelBuffer, withPresentationTime: presentationTime))
                 pixelBufferPointer.deallocate()
+                print(4)
             }
         }
         
@@ -285,6 +283,60 @@ public struct Screen {
             await assetWriter.finishWriting()
             
             guard assetWriter.error == nil else { throw assetWriter.error! }
+        }
+        
+        private class MetalImageConverter {
+            private let device: MTLDevice
+            private let commandQueue: MTLCommandQueue
+            private let textureLoader: MTKTextureLoader
+            
+            init() {
+                self.device = MTLCreateSystemDefaultDevice()!
+                self.commandQueue = self.device.makeCommandQueue()!
+                self.textureLoader = MTKTextureLoader(device: self.device)
+            }
+            
+            func convertImageToPixelBuffer(_ image: CGImage, pixelBuffer: CVPixelBuffer?)  {
+                let texture = try! textureLoader.newTexture(cgImage: image, options: nil)
+                
+                let width = image.width
+                let height = image.height
+                
+                let buffer = pixelBuffer!
+                print(1)
+                
+                CVPixelBufferLockBaseAddress(buffer, CVPixelBufferLockFlags(rawValue: CVOptionFlags(0)))
+                defer {
+                    CVPixelBufferUnlockBaseAddress(buffer, CVPixelBufferLockFlags(rawValue: CVOptionFlags(0)))
+                }
+                
+                let textureDescriptor = MTLTextureDescriptor.texture2DDescriptor(
+                    pixelFormat: .bgra8Unorm,
+                    width: width,
+                    height: height,
+                    mipmapped: false
+                )
+                
+                textureDescriptor.usage = [.shaderWrite, .shaderRead]
+                print(2)
+                
+                let textureFromBuffer = device.makeTexture(
+                    descriptor: textureDescriptor,
+                    iosurface: CVPixelBufferGetIOSurface(buffer)!.takeUnretainedValue(),
+                    plane: 0)!
+                
+                let commandBuffer = commandQueue.makeCommandBuffer()!
+                let blitEncoder = commandBuffer.makeBlitCommandEncoder()!
+                print(3)
+                
+                blitEncoder.copy(from: texture, to: textureFromBuffer)
+                blitEncoder.endEncoding()
+                
+                commandBuffer.commit()
+                commandBuffer.waitUntilCompleted()
+                
+                assert(commandBuffer.status.rawValue == 4)
+            }
         }
         
         private enum ConvertImagesToVideoError: LocalizedError, CustomStringConvertible {
