@@ -221,6 +221,9 @@ public struct Screen {
             // -- Set video parameters
             let date = Date()
             
+            // -- Add images to video
+            let defaultColorSpace = CGColorSpaceCreateDeviceRGB()
+            
             nonisolated(unsafe)
             let produce = produce
             
@@ -264,7 +267,21 @@ public struct Screen {
                 
                 preparePixelQueue.sync { } // wait for the queue
                 
-                converter.convertImageToPixelBuffer(frame, pixelBuffer: pixelBuffer)
+                if size == frame.size {
+                    converter.convertImageToPixelBuffer(frame, pixelBuffer: pixelBuffer)
+                } else {
+                    CVPixelBufferLockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: CVOptionFlags(0)))
+                    
+                    let pixelData = CVPixelBufferGetBaseAddress(pixelBuffer)
+                    
+                    let context = CGContext(data: pixelData, width: Int(size.width), height: Int(size.height), bitsPerComponent: 8, bytesPerRow: CVPixelBufferGetBytesPerRow(pixelBuffer), space: colorSpace ?? defaultColorSpace, bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)!
+                    
+                    let drawCGRect = CGRect(center: CGPoint(x: size.width / 2, y: size.height / 2), size: frame.size)
+                    
+                    context.draw(frame, in: drawCGRect) // takes most time
+                    
+                    CVPixelBufferUnlockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: CVOptionFlags(0)))
+                }
                 
                 assert(assetWriter.status == .writing)
                 assert(assetWriterVideoInput.isReadyForMoreMediaData)
