@@ -117,7 +117,8 @@ public struct Screen {
     ///
     /// To obtain a list of displays, use ``displays(of:maxDisplays:)``.
     public static func record(_ display: Display = .main, target: CGRect? = nil, to destination: URL, codec: AVVideoCodecType = .hevc) throws -> VideoWriter {
-        try VideoWriter(produce: { capture(display, target: target) }, size: display.size, to: destination)
+        let firstFrame = capture(display, target: target)!
+        return try VideoWriter(produce: { capture(display, target: target) }, size: firstFrame.size, to: destination)
     }
     
     /// Captures the image of a window.
