@@ -92,7 +92,6 @@ public struct Screen {
     ///
     /// - Parameters:
     ///   - window: Specify a particular window for capturing.
-    ///   - listOption: Specifies the scope of windows to include in the image.
     ///   - imageOption: Specifies the image rendering options. See discussion for more.
     ///
     /// For `imageOption`, you could pass:
@@ -101,10 +100,9 @@ public struct Screen {
     /// - Note: A window obtained ``windows(options:)`` does not guarantee such window is capture-able.
     public static func capture(
         _ window: Window,
-        listOption: CGWindowListOption = .optionIncludingWindow,
         imageOption: CGWindowImageOption = []
     ) -> CGImage? {
-        CGWindowListCreateImage(.null, listOption, window.id, imageOption)
+        CGWindowListCreateImage(.null, .optionIncludingWindow, window.id, imageOption)
     }
     
     /// Captures the current screen.
@@ -123,21 +121,15 @@ public struct Screen {
     
     /// Captures the image of a window.
     ///
-    /// - Parameters:
-    ///   - window: Specify a particular window for capturing.
-    ///   - listOption: Specifies the scope of windows to include in the image.
-    ///   - imageOption: Specifies the image rendering options. See discussion for more.
-    ///   - destination: The location to store the video. You need to ensure this function can write to this location, and there doesn't exit a file there.
-    ///   - codec: The codec for the video. When the codec is ProRess4444, alpha channel is preserved.
+    /// ### Transparent Video
     ///
-    /// For `imageOption`, you could pass:
-    /// - `boundsIgnoreFraming` for ignoring the shadow.
+    /// The default settings is recoding opaque videos, and `boundsIgnoreFraming` is applied.
     ///
-    /// - Note: A window obtained ``windows(options:)`` does not guarantee such window is capture-able.
+    /// To record a transparent video, it is suggested to use `ProRess4444` as `codec`, and `[]` as `imageOption`.
     ///
     /// ### Record a window
     ///
-    /// With the ``record(_:listOption:imageOption:to:codec:)``, you could record a window, something that macOS screen recording cannot do.
+    /// With the ``record(_:imageOption:to:codec:size:)``, you could record a window, something that macOS screen recording cannot do.
     ///
     /// For example, This would record the *finder* window that currently opens *computer*
     ///
@@ -146,7 +138,7 @@ public struct Screen {
     /// let window = try Screen.windows().filter({ $0.owner.name.contains("Finder") && $0.name == "Vaida's MacBook Pro" }).first!
     ///
     /// // start the record session. This method returns immediately after the record session is started
-    /// let recorder = try Screen.record(window, to: .desktopDirectory.appending(path: "file (alpha).mov"), codec: .proRes4444)
+    /// let recorder = try Screen.record(window, to: .desktopDirectory.appending(path: "file (alpha).mov"), imageOption: [], codec: .proRes4444)
     ///
     /// // the duration to record
     /// try await Task.sleep(for: .seconds(1))
@@ -157,16 +149,31 @@ public struct Screen {
     ///
     /// With the `proRes4444` codec, the alpha component is preserved.
     ///
-    /// - Experiment: The recorded video is around `120 fps`. As the render is now GPU-accelerated.
+    /// - Parameters:
+    ///   - window: Specify a particular window for capturing.
+    ///   - imageOption: Specifies the image rendering options. See discussion for more.
+    ///   - destination: The location to store the video. You need to ensure this function can write to this location, and there doesn't exit a file there.
+    ///   - codec: The codec for the video. When the codec is ProRess4444, alpha channel is preserved.
+    ///   - size: You could specify this value to override the recording canvas size. This could be useful if you know you will resize the window.
+    ///
+    /// - Note: A window obtained ``windows(options:)`` does not guarantee such window is capture-able.
+    ///
+    /// - Experiment: The recorded video is around `120 fps`. As the rendering is now GPU-accelerated.
+    ///
+    /// - Bug: The recording is broken when the window is moved during capture, or switched to another desktop.
     public static func record(
         _ window: Window,
-        listOption: CGWindowListOption = .optionIncludingWindow,
-        imageOption: CGWindowImageOption = [],
+        imageOption: CGWindowImageOption = .boundsIgnoreFraming,
         to destination: URL,
-        codec: AVVideoCodecType = .hevcWithAlpha
+        codec: AVVideoCodecType = .hevc,
+        size: CGSize? = nil
     ) throws -> VideoWriter {
-        let firstFrame = capture(window, listOption: listOption, imageOption: imageOption)!
-        return try VideoWriter(produce: { capture(window, listOption: listOption, imageOption: imageOption) }, size: firstFrame.size, to: destination, codec: codec)
+        if let size {
+            return try VideoWriter(produce: { capture(window, imageOption: imageOption) }, size: size, to: destination, codec: codec)
+        } else {
+            let firstFrame = capture(window, imageOption: imageOption)!
+            return try VideoWriter(produce: { capture(window, imageOption: imageOption) }, size: firstFrame.size, to: destination, codec: codec)
+        }
     }
     
     
@@ -185,7 +192,7 @@ public struct Screen {
         let preparePixelQueue = DispatchQueue(label: "package.ControlKit.VideoWriter.preparePixelQueue")
         
         /// Transparency is only recorded when codec is `ProRess4444`.
-        init(produce: @escaping () -> CGImage?, size: CGSize, to url: URL, colorSpace: CGColorSpace? = nil, container: AVFileType = .mov, codec: AVVideoCodecType = .hevc) throws {
+        init(produce: @escaping () -> CGImage?, size: CGSize, to url: URL, container: AVFileType = .mov, codec: AVVideoCodecType = .hevc) throws {
             let videoWidth  = size.width
             let videoHeight = size.height
             
@@ -219,10 +226,11 @@ public struct Screen {
             guard pixelBufferAdaptor.pixelBufferPool != nil else { throw ConvertImagesToVideoError.pixelBufferPoolNil }
             
             // -- Set video parameters
-            let date = Date()
+            nonisolated(unsafe)
+            var date = Date()
             
-            // -- Add images to video
-            let defaultColorSpace = CGColorSpaceCreateDeviceRGB()
+            nonisolated(unsafe)
+            var isFirst = true
             
             nonisolated(unsafe)
             let produce = produce
@@ -254,6 +262,12 @@ public struct Screen {
                     pixelBuffer = pixelBufferPointer.pointee!
                     
                     presentationTime = CMTime(seconds: date.distance(to: Date()), preferredTimescale: 6000)
+                    
+                    if isFirst {
+                        isFirst = false
+                        date = Date()
+                        presentationTime = CMTime(value: 0, timescale: 60000)
+                    }
                 }
                 
                 // Produce
@@ -267,21 +281,21 @@ public struct Screen {
                 
                 preparePixelQueue.sync { } // wait for the queue
                 
-                if size == frame.size {
-                    converter.convertImageToPixelBuffer(frame, pixelBuffer: pixelBuffer)
-                } else {
-                    CVPixelBufferLockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: CVOptionFlags(0)))
-                    
-                    let pixelData = CVPixelBufferGetBaseAddress(pixelBuffer)
-                    
-                    let context = CGContext(data: pixelData, width: Int(size.width), height: Int(size.height), bitsPerComponent: 8, bytesPerRow: CVPixelBufferGetBytesPerRow(pixelBuffer), space: colorSpace ?? defaultColorSpace, bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)!
-                    
-                    let drawCGRect = CGRect(center: CGPoint(x: size.width / 2, y: size.height / 2), size: frame.size)
-                    
-                    context.draw(frame, in: drawCGRect) // takes most time
-                    
-                    CVPixelBufferUnlockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: CVOptionFlags(0)))
-                }
+                converter.convertImageToPixelBuffer(frame, pixelBuffer: pixelBuffer, size: size)
+//                if size == frame.size {
+//                } else {
+//                    CVPixelBufferLockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: CVOptionFlags(0)))
+//                    
+//                    let pixelData = CVPixelBufferGetBaseAddress(pixelBuffer)
+//                    
+//                    let context = CGContext(data: pixelData, width: Int(size.width), height: Int(size.height), bitsPerComponent: 8, bytesPerRow: CVPixelBufferGetBytesPerRow(pixelBuffer), space: frame.colorSpace!, bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)!
+//                    
+//                    let drawCGRect = CGRect(center: CGPoint(x: size.width / 2, y: size.height / 2), size: frame.size)
+//                    
+//                    context.draw(frame, in: drawCGRect) // takes most time
+//                    
+//                    CVPixelBufferUnlockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: CVOptionFlags(0)))
+//                }
                 
                 assert(assetWriter.status == .writing)
                 assert(assetWriterVideoInput.isReadyForMoreMediaData)
@@ -310,11 +324,8 @@ public struct Screen {
                 self.textureLoader = MTKTextureLoader(device: self.device)
             }
             
-            func convertImageToPixelBuffer(_ image: CGImage, pixelBuffer: CVPixelBuffer?)  {
+            func convertImageToPixelBuffer(_ image: CGImage, pixelBuffer: CVPixelBuffer?, size: CGSize)  {
                 let texture = try! textureLoader.newTexture(cgImage: image, options: nil)
-                
-                let width = image.width
-                let height = image.height
                 
                 let buffer = pixelBuffer!
                 
@@ -325,8 +336,8 @@ public struct Screen {
                 
                 let textureDescriptor = MTLTextureDescriptor.texture2DDescriptor(
                     pixelFormat: .bgra8Unorm,
-                    width: width,
-                    height: height,
+                    width: Int(size.width),
+                    height: Int(size.height),
                     mipmapped: false
                 )
                 
@@ -340,7 +351,24 @@ public struct Screen {
                 let commandBuffer = commandQueue.makeCommandBuffer()!
                 let blitEncoder = commandBuffer.makeBlitCommandEncoder()!
                 
-                blitEncoder.copy(from: texture, to: textureFromBuffer)
+                var drawCGRect = CGRect(center: CGPoint(x: image.size.width / 2, y: image.size.height / 2), size: size)
+                
+                if drawCGRect.origin == CGPoint(x: 44, y: 44) {
+                    // caused by focus, use auto correct
+                    drawCGRect.origin.y -= 20
+                }
+                
+                blitEncoder.copy(
+                    from: texture,
+                    sourceSlice: 0,
+                    sourceLevel: 0,
+                    sourceOrigin: MTLOrigin(x: max(0, Int(drawCGRect.origin.x)), y: max(0, Int(drawCGRect.origin.y)), z: 0),
+                    sourceSize: MTLSize(width: Int(drawCGRect.width), height: Int(drawCGRect.height), depth: 1),
+                    to: textureFromBuffer,
+                    destinationSlice: 0,
+                    destinationLevel: 0,
+                    destinationOrigin: MTLOriginMake(0, 0, 0)
+                )
                 blitEncoder.endEncoding()
                 
                 commandBuffer.commit()

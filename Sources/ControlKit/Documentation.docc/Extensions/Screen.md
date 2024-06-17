@@ -30,7 +30,7 @@ This structure provides a set of way to control and monitor the windows and thei
     }
     
     @Tab("Record the window") {
-        With the ``record(_:listOption:imageOption:to:codec:)``, you could record a window, something that macOS screen recording cannot do.
+        With the ``record(_:imageOption:to:codec:size:)``, you could record a window, something that macOS screen recording cannot do.
         
         For example, This would record the *finder* window that currently opens *computer*
         
@@ -78,10 +78,10 @@ try windows.control.closeButton.press()
 
 ### Captures
 
-- ``capture(_:listOption:imageOption:)``
+- ``capture(_:imageOption:)``
 - ``capture(_:target:)``
 
 ### Recordings
 
 - ``record(_:target:to:codec:)``
-- ``record(_:listOption:imageOption:to:codec:)``
+- ``record(_:imageOption:to:codec:size:)``
