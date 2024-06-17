@@ -99,6 +99,56 @@ extension AXUIElement: @retroactive CustomStringConvertible {
 
 extension AXUIElement: @retroactive CustomDebugStringConvertible {
     
+    /// The children hierarchy.
+    ///
+    /// ```
+    /// let window = try Screen.windows(options: .excludeDesktopElements).filter({ $0.owner.name.contains("Finder") && $0.name == "Vaida's MacBook Pro" }).first!
+    /// print(window.control!.debugDescription)
+    /// ```
+    /// ```
+    /// ─Vaida's MacBook Pro (window, AXStandardWindow)
+    /// ├─(splitGroup)
+    /// │ ├─(scrollArea)
+    /// │ │ ╰─(outline)
+    /// │ │   ├─(row, AXOutlineRow)
+    /// │ │   │ ╰─(cell)
+    /// │ │   │   ╰─Favorites (staticText)
+    /// │ │   ├─(row, AXOutlineRow)
+    /// │ │   │ ╰─(cell)
+    /// │ │   │   ├─Study (staticText)
+    /// │ │   │   ╰─(image)
+    /// │ │   ├─(row, AXOutlineRow)
+    /// │ │   │ ╰─(cell)
+    /// │ │   │   ├─Packages (staticText)
+    /// │ │   │   ╰─(image)
+    /// │ │   ├─(row, AXOutlineRow)
+    /// │ │   │ ╰─(cell)
+    /// │ │   │   ├─Desktop (staticText)
+    /// │ │   │   ╰─(image)
+    /// │ │   ├─(row, AXOutlineRow)
+    /// │ │   │ ╰─(cell)
+    /// │ │   │   ╰─iCloud (staticText)
+    /// │ │   ├─(row, AXOutlineRow)
+    /// │ │   │ ╰─(cell)
+    /// │ │   │   ├─iCloud Drive (staticText)
+    /// │ │   │   ├─(image)
+    /// │ │   │   ╰─1 (progressIndicator)
+    /// │ │   ╰─(column)
+    /// │ ├─143 (splitter)
+    /// │ ╰─(splitGroup)
+    /// │   ╰─(scrollArea)
+    /// │     ╰─(list, AXCollectionList)
+    /// │       ╰─(list, AXSectionList)
+    /// │         ├─(group)
+    /// │         │ ╰─Macintosh HD (image) file:///
+    /// │         ╰─(group)
+    /// ├─(toolbar)
+    /// ├─(button, AXCloseButton)
+    /// ├─(button, AXFullScreenButton)
+    /// │ ╰─(group)
+    /// ├─(button, AXMinimizeButton)
+    /// ╰─Vaida's MacBook Pro (staticText)
+    /// ```
     public var debugDescription: String {
         String.recursiveDescription(of: self, children: { try? $0.children }, description: { $0.description })
     }
@@ -138,6 +188,8 @@ extension AXUIElement {
         case unknown
         case valueIndicator
         case textArea
+        case outline
+        case progressIndicator
         case raw(String)
         
         public var rawValue: String {
@@ -171,6 +223,8 @@ extension AXUIElement {
             case .unknown: "AXUnknown"
             case .valueIndicator: "AXValueIndicator"
             case .textArea: "AXTextArea"
+            case .outline: "AXOutline"
+            case .progressIndicator: "AXProgressIndicator"
             case let .raw(string): string
             }
         }
@@ -206,6 +260,8 @@ extension AXUIElement {
             case "AXUnknown": .unknown
             case "AXValueIndicator": .valueIndicator
             case "AXTextArea": .textArea
+            case "AXOutline": .outline
+            case "AXProgressIndicator": .progressIndicator
             default: .raw(rawValue)
             }
         }

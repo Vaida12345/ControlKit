@@ -16,9 +16,9 @@ public struct MainApp {
 //            print(window, window.name)
 //        }
         
-        try Screen.capture(target: CGRect(x: 0, y: 0, width: 400, height: 400))?.write(to: .desktopDirectory.appending(path: "file.png"))
         
         let window = try Screen.windows(options: .excludeDesktopElements).filter({ $0.owner.name.contains("Finder") && $0.name == "Vaida's MacBook Pro" }).first!
+        print(window.control!.debugDescription)
         let recorder = try Screen.record(window, to: .desktopDirectory.appending(path: "file (alpha).mov"), codec: .hevc)
         
         try await Task.sleep(for: .seconds(1))

@@ -24,7 +24,10 @@ This extension can be used to inspect and control ``Screen/Window``.
 > try windows.control.closeButton.press()
 > ```
 
-- Tip: To debug Accessibility, use *Accessibility Inspector* from *Xcode > Open Developer Tool*
+> Tip: 
+> To debug Accessibility, use *Accessibility Inspector* from *Xcode > Open Developer Tool*.
+>
+> To view the tree hierarchy, use ``debugDescription``.
 
 ## Topics
 

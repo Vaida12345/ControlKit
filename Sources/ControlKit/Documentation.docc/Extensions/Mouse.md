@@ -17,5 +17,4 @@
 
 ### Tap
 
-- ``tap(at:)``
-- ``controlTap(at:)``
+- ``tap(_:at:)``

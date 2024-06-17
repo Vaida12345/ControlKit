@@ -15,8 +15,8 @@ Control & monitor your mac using swift code.
 This package includes a list of functions to control and monitor your mac.
 
 You could
-- Explicit (low-level) handle inputs via `CoreGraphics`.
-- Implicit (high-level) control via accessibility (`ApplicationServices`).
+- Explicit (low-level) handle inputs via ``CoreGraphics``.
+- Implicit (high-level) control via accessibility (``ApplicationServices``).
 
 ### Explicit Controls
 
