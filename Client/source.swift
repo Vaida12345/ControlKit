@@ -10,17 +10,12 @@ public struct MainApp {
     
     public static func main() async throws {
         
-        for window in try Screen.windows() {
-            print(window)
-        }
+        let window = try Screen.windows().filter({ $0.owner.name.contains("Finder") && $0.name == "Vaida's MacBook Pro" }).first!
+        let recorder = try Screen.record(window, to: .desktopDirectory.appending(path: "file.mov"))
         
-        let control = try Screen.windows().filter({ $0.owner.name.contains("WeChat") }).compactMap({ $0.control }).first!
+        try await Task.sleep(for: .seconds(1))
+        try await recorder.finish()
         
-        // Focus on the window
-        try control.focus()
-        print(control.debugDescription)
-        
-//        let staticText = try windows.control[0][1][0][0][0][0][0][0]
     }
     
 }
