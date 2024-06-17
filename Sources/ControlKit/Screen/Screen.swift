@@ -157,7 +157,7 @@ public struct Screen {
     ///
     /// With the `proRes4444` codec, the alpha component is preserved.
     ///
-    /// - Experiment: The recorded video is around `66.89 fps`. As the capture and render happens in sync.
+    /// - Experiment: The recorded video is around `120 fps`. As the render is now GPU-accelerated.
     public static func record(
         _ window: Window,
         listOption: CGWindowListOption = .optionIncludingWindow,
@@ -208,7 +208,6 @@ public struct Screen {
                 kCVPixelBufferWidthKey           as String: videoWidth                as AnyObject,
                 kCVPixelBufferHeightKey          as String: videoHeight               as AnyObject
             ]
-            print(videoWidth, videoHeight)
             
             nonisolated(unsafe)
             let pixelBufferAdaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: assetWriterVideoInput, sourcePixelBufferAttributes: sourceBufferAttributes)
@@ -242,13 +241,17 @@ public struct Screen {
                 nonisolated(unsafe)
                 var pixelBuffer: CVPixelBuffer! = nil
                 
+                nonisolated(unsafe)
+                var presentationTime: CMTime! = nil
+                
                 preparePixelQueue.async {
                     let pixelBufferPool = pixelBufferAdaptor.pixelBufferPool!
                     
                     CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, pixelBufferPool, pixelBufferPointer)
                     pixelBuffer = pixelBufferPointer.pointee!
+                    
+                    presentationTime = CMTime(seconds: date.distance(to: Date()), preferredTimescale: 6000)
                 }
-                print(-2)
                 
                 // Produce
                 var _frame = produce()
@@ -257,22 +260,16 @@ public struct Screen {
                 }
                 let frame = _frame!
                 
-                print(-1)
-                
                 // Draw image into context
-                let presentationTime = CMTime(seconds: date.distance(to: Date()), preferredTimescale: 120)
                 
                 preparePixelQueue.sync { } // wait for the queue
-                
-                print(0)
                 
                 converter.convertImageToPixelBuffer(frame, pixelBuffer: pixelBuffer)
                 
                 assert(assetWriter.status == .writing)
-                print(assetWriter.error)
+                assert(assetWriterVideoInput.isReadyForMoreMediaData)
                 assert(pixelBufferAdaptor.append(pixelBuffer, withPresentationTime: presentationTime))
                 pixelBufferPointer.deallocate()
-                print(4)
             }
         }
         
@@ -303,7 +300,6 @@ public struct Screen {
                 let height = image.height
                 
                 let buffer = pixelBuffer!
-                print(1)
                 
                 CVPixelBufferLockBaseAddress(buffer, CVPixelBufferLockFlags(rawValue: CVOptionFlags(0)))
                 defer {
@@ -318,7 +314,6 @@ public struct Screen {
                 )
                 
                 textureDescriptor.usage = [.shaderWrite, .shaderRead]
-                print(2)
                 
                 let textureFromBuffer = device.makeTexture(
                     descriptor: textureDescriptor,
@@ -327,7 +322,6 @@ public struct Screen {
                 
                 let commandBuffer = commandQueue.makeCommandBuffer()!
                 let blitEncoder = commandBuffer.makeBlitCommandEncoder()!
-                print(3)
                 
                 blitEncoder.copy(from: texture, to: textureFromBuffer)
                 blitEncoder.endEncoding()
