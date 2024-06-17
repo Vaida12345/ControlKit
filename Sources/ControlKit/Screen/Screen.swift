@@ -112,11 +112,11 @@ public struct Screen {
     /// - Parameters:
     ///   - display: The display to capture. The default value is the display on screen.
     ///   - target: The rect of interest
-    ///
-    /// - Experiment: On a benchmark with `-O`, it takes 50ms on average to capture. That is around 200 frames per second. It took around 8% of the CPU to capture non-stop.
+    ///   - destination: The location to store the video. You need to ensure this function can write to this location, and there doesn't exit a file there.
+    ///   - codec: The codec for the video.
     ///
     /// To obtain a list of displays, use ``displays(of:maxDisplays:)``.
-    public static func record(_ display: Display = .main, target: CGRect? = nil, to destination: URL) throws -> VideoWriter {
+    public static func record(_ display: Display = .main, target: CGRect? = nil, to destination: URL, codec: AVVideoCodecType = .hevc) throws -> VideoWriter {
         try VideoWriter(produce: { capture(display, target: target) }, size: display.size, to: destination)
     }
     
@@ -126,19 +126,46 @@ public struct Screen {
     ///   - window: Specify a particular window for capturing.
     ///   - listOption: Specifies the scope of windows to include in the image.
     ///   - imageOption: Specifies the image rendering options. See discussion for more.
+    ///   - destination: The location to store the video. You need to ensure this function can write to this location, and there doesn't exit a file there.
+    ///   - codec: The codec for the video. When the codec is ProRess4444, alpha channel is preserved.
     ///
     /// For `imageOption`, you could pass:
     /// - `boundsIgnoreFraming` for ignoring the shadow.
     ///
     /// - Note: A window obtained ``windows(options:)`` does not guarantee such window is capture-able.
+    ///
+    /// ### Record a window
+    ///
+    /// With the ``record(_:listOption:imageOption:to:codec:)``, you could record a window, something that macOS screen recording cannot do.
+    ///
+    /// For example, This would record the *finder* window that currently opens *computer*
+    ///
+    /// ```swift
+    /// // locate the window
+    /// let window = try Screen.windows().filter({ $0.owner.name.contains("Finder") && $0.name == "Vaida's MacBook Pro" }).first!
+    ///
+    /// // start the record session. This method returns immediately after the record session is started
+    /// let recorder = try Screen.record(window, to: .desktopDirectory.appending(path: "file (alpha).mov"), codec: .proRes4444)
+    ///
+    /// // the duration to record
+    /// try await Task.sleep(for: .seconds(1))
+    ///
+    /// // tell the recorder to stop recording. This method will wait until the file is written.
+    /// try await recorder.finish()
+    /// ```
+    ///
+    /// With the `proRes4444` codec, the alpha component is preserved.
+    ///
+    /// - Experiment: The recorded video is around `66.89 fps`. As the capture and render happens in sync.
     public static func record(
         _ window: Window,
         listOption: CGWindowListOption = .optionIncludingWindow,
         imageOption: CGWindowImageOption = [],
-        to destination: URL
+        to destination: URL,
+        codec: AVVideoCodecType = .hevcWithAlpha
     ) throws -> VideoWriter {
         let firstFrame = capture(window, listOption: listOption, imageOption: imageOption)!
-        return try VideoWriter(produce: { capture(window, listOption: listOption, imageOption: imageOption) }, size: firstFrame.size, to: destination, codec: .hevcWithAlpha)
+        return try VideoWriter(produce: { capture(window, listOption: listOption, imageOption: imageOption) }, size: firstFrame.size, to: destination, codec: codec)
     }
     
     
@@ -153,6 +180,10 @@ public struct Screen {
         
         let mediaQueue = DispatchQueue(label: "package.ControlKit.VideoWriter.mediaQueue")
         
+        // Must use GCD instead of swift concurrency.
+        let preparePixelQueue = DispatchQueue(label: "package.ControlKit.VideoWriter.preparePixelQueue")
+        
+        /// Transparency is only recorded when codec is `ProRess4444`.
         init(produce: @escaping () -> CGImage?, size: CGSize, to url: URL, colorSpace: CGColorSpace? = nil, container: AVFileType = .mov, codec: AVVideoCodecType = .hevc) throws {
             let videoWidth  = size.width
             let videoHeight = size.height
@@ -202,36 +233,47 @@ public struct Screen {
                     return
                 }
                 
+                // prepare buffer
+                nonisolated(unsafe)
+                let pixelBufferPointer = UnsafeMutablePointer<CVPixelBuffer?>.allocate(capacity: 1)
+                
+                nonisolated(unsafe)
+                var pixelBuffer: CVPixelBuffer! = nil
+                
+                nonisolated(unsafe)
+                var context: CGContext! = nil
+                
+                preparePixelQueue.async {
+                    let pixelBufferPool = pixelBufferAdaptor.pixelBufferPool!
+                    
+                    CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, pixelBufferPool, pixelBufferPointer)
+                    pixelBuffer = pixelBufferPointer.pointee!
+                    
+                    CVPixelBufferLockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: CVOptionFlags(0)))
+                    
+                    let pixelData = CVPixelBufferGetBaseAddress(pixelBuffer)
+                    
+                    // Create CGBitmapContext
+                    context = CGContext(data: pixelData, width: Int(size.width), height: Int(size.height), bitsPerComponent: 8, bytesPerRow: CVPixelBufferGetBytesPerRow(pixelBuffer), space: colorSpace ?? defaultColorSpace, bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)!
+                }
+                
+                // Produce
                 var _frame = produce()
                 while _frame == nil {
                     _frame = produce()
                 }
                 let frame = _frame!
-                
+
                 // Draw image into context
-                
                 let presentationTime = CMTime(seconds: date.distance(to: Date()), preferredTimescale: 120)
                 
-                let pixelBufferPool = pixelBufferAdaptor.pixelBufferPool!
-                let pixelBufferPointer = UnsafeMutablePointer<CVPixelBuffer?>.allocate(capacity: 1)
-                defer { pixelBufferPointer.deallocate() }
+                preparePixelQueue.sync { } // wait for the queue
                 
-                CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, pixelBufferPool, pixelBufferPointer)
-                let pixelBuffer = pixelBufferPointer.pointee!
-                
-                CVPixelBufferLockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: CVOptionFlags(0)))
-                
-                let pixelData = CVPixelBufferGetBaseAddress(pixelBuffer)
-                
-                // Create CGBitmapContext
-                let context = CGContext(data: pixelData, width: Int(size.width), height: Int(size.height), bitsPerComponent: 8, bytesPerRow: CVPixelBufferGetBytesPerRow(pixelBuffer), space: colorSpace ?? defaultColorSpace, bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)!
-                
-                context.clear(drawCGRect)
-                context.draw(frame, in: drawCGRect)
-                try! context.makeImage()?.write(to: .desktopDirectory.appending(path: "__file.png"))
+                context.draw(frame, in: drawCGRect) // takes most time
                 CVPixelBufferUnlockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: CVOptionFlags(0)))
                 
                 pixelBufferAdaptor.append(pixelBuffer, withPresentationTime: presentationTime)
+                pixelBufferPointer.deallocate()
             }
         }
         
