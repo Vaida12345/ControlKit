@@ -455,9 +455,9 @@ public extension AXUIElement {
     
     /// The contents of the element.
     @inlinable
-    var contents: CFArray {
+    var contents: [AXUIElement] {
         get throws(AXError) {
-            try self.attribute(for: kAXContentsAttribute, as: CFArray.self)
+            try self.attribute(for: kAXContentsAttribute)
         }
     }
     

@@ -15,9 +15,10 @@ public extension AXUIElement {
     ///
     /// This string is for identification purposes only and does not need to be localized.
     @inlinable
-    var role: String {
+    var role: Role {
         get {
-            try! self.attribute(for: kAXRoleAttribute, as: String.self)
+            let rawValue = try! self.attribute(for: kAXRoleAttribute, as: String.self)
+            return Role(rawValue: rawValue)
         }
     }
     
@@ -163,6 +164,14 @@ public extension AXUIElement {
     var fullScreenButton: AXUIElement {
         get throws(AXError) {
             try self.attribute(for: kAXFullScreenButtonAttribute, as: AXUIElement.self)
+        }
+    }
+    
+    /// The default button.
+    @inlinable
+    var defaultButton: AXUIElement {
+        get throws(AXError) {
+            try self.attribute(for: kAXDefaultButtonAttribute, as: AXUIElement.self)
         }
     }
     

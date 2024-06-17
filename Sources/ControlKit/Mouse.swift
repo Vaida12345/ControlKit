@@ -24,36 +24,27 @@ public struct Mouse {
         // Purpose: To observe and filter low-level input events before they are processed by the HID system.
     }
     
-    /// Use the left button to click the mouse at the specified location.
+    /// Use the button to click the mouse at the specified location.
     @inlinable
-    public static func tap(at position: CGPoint) {
+    public static func tap(_ kind: TapKind = .primary, at position: CGPoint) {
         CGEvent(mouseEventSource: nil,
-                mouseType: .leftMouseDown,
+                mouseType: kind == .primary ? .leftMouseDown : .rightMouseDown,
                 mouseCursorPosition: position,
                 mouseButton: .left)? // the button is ignored
             .post(tap: .cghidEventTap)
         
         CGEvent(mouseEventSource: nil,
-                mouseType: .leftMouseUp,
+                mouseType: kind == .primary ? .leftMouseUp : .rightMouseUp,
                 mouseCursorPosition: position,
                 mouseButton: .left)? // the button is ignored
             .post(tap: .cghidEventTap)
     }
     
-    /// Use the right button to click the mouse at the specified location.
-    @inlinable
-    public static func controlTap(at position: CGPoint) {
-        CGEvent(mouseEventSource: nil,
-                mouseType: .rightMouseDown,
-                mouseCursorPosition: position,
-                mouseButton: .left)? // the button is ignored
-            .post(tap: .cghidEventTap)
-        
-        CGEvent(mouseEventSource: nil,
-                mouseType: .rightMouseUp,
-                mouseCursorPosition: position,
-                mouseButton: .left)? // the button is ignored
-            .post(tap: .cghidEventTap)
+    public enum TapKind {
+        /// Indicating left click
+        case primary
+        /// Indicating right click
+        case secondary
     }
     
 }

@@ -60,7 +60,7 @@ extension Screen {
         /// kCGWindowStoreType
         public let storeType: NSNumber
         
-        public private(set) lazy var control: AXUIElement = { () -> AXUIElement in
+        public private(set) lazy var control: AXUIElement? = { () -> AXUIElement? in
             let app = AXUIElementCreateApplication(pid_t(owner.pid))
             var windows: CFTypeRef?
             AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &windows)
@@ -74,7 +74,8 @@ extension Screen {
                     return window
                 }
             }
-            fatalError("A control for the given window \(self) was not found.")
+            
+            return nil
         }()
         
         

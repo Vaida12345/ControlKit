@@ -24,6 +24,8 @@ This extension can be used to inspect and control ``Screen/Window``.
 > try windows.control.closeButton.press()
 > ```
 
+- Tip: To debug Accessibility, use *Accessibility Inspector* from *Xcode > Open Developer Tool*
+
 ## Topics
 
 ### Basic Inspections
@@ -48,6 +50,7 @@ This extension can be used to inspect and control ``Screen/Window``.
 ### Controls
 
 - ``press()``
+- ``showMenu()``
 - ``confirm()``
 
 ### Children
@@ -55,6 +58,7 @@ This extension can be used to inspect and control ``Screen/Window``.
 The child elements, you could perform actions on them, such as ``press()``.
 
 - ``closeButton``
+- ``defaultButton``
 - ``children``
 
 ### Roles

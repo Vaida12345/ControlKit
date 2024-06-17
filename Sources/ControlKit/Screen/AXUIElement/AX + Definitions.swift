@@ -67,12 +67,20 @@ public extension AXUIElement {
 extension AXUIElement: @retroactive CustomStringConvertible {
     
     public var description: String {
+        let role = self.role
+        
         var description = ""
-        if let title = try? self.title {
+        if let title = try? self.title,
+           !title.isEmpty {
             description += title + " "
+        } else if let content = try? self.value {
+            let _content = "\(content)"
+            if !_content.isEmpty && _content != "(\n)" {
+                description += _content + " "
+            }
         }
         
-        description += "(\(self.role)"
+        description += "(\(role)"
         
         if let role = try? self.subrole {
             description += ", \(role))"
@@ -80,8 +88,8 @@ extension AXUIElement: @retroactive CustomStringConvertible {
             description += ")"
         }
         
-        if let identifier = try? self.identifier {
-            description += " " + identifier
+        if let url = try? self.url {
+            description += " \(url)"
         }
         
         return description
@@ -93,6 +101,114 @@ extension AXUIElement: @retroactive CustomDebugStringConvertible {
     
     public var debugDescription: String {
         String.recursiveDescription(of: self, children: { try? $0.children }, description: { $0.description })
+    }
+    
+}
+
+extension AXUIElement {
+    
+    public enum Role: RawRepresentable {
+        case splitGroup
+        case splitter
+        case tabGroup
+        case group
+        case scrollArea
+        case window
+        case webArea
+        /// A link, which has a ``AXUIElement/title``.
+        case link
+        case heading
+        case button
+        case list
+        case staticText
+        case scrollBar
+        case image
+        case row
+        case cell
+        case toolbar
+        case opaqueProviderGroup
+        case textField
+        case listMarker
+        case popUpButton
+        case column
+        case table
+        case comboBox
+        case radioButton
+        case checkBox
+        case unknown
+        case valueIndicator
+        case textArea
+        case raw(String)
+        
+        public var rawValue: String {
+            switch self {
+            case .splitGroup: "AXSplitGroup"
+            case .splitter: "AXSplitter"
+            case .tabGroup: "AXTabGroup"
+            case .group: "AXGroup"
+            case .scrollArea: "AXScrollArea"
+            case .window: "AXWindow"
+            case .webArea: "AXWebArea"
+            case .link: "AXLink"
+            case .heading: "AXHeading"
+            case .button: "AXButton"
+            case .list: "AXList"
+            case .staticText: "AXStaticText"
+            case .scrollBar: "AXScrollBar"
+            case .image: "AXImage"
+            case .row: "AXRow"
+            case .cell: "AXCell"
+            case .toolbar: "AXToolbar"
+            case .opaqueProviderGroup: "AXOpaqueProviderGroup"
+            case .textField: "AXTextField"
+            case .listMarker: "AXListMarker"
+            case .popUpButton: "AXPopUpButton"
+            case .column: "AXColumn"
+            case .table: "AXTable"
+            case .comboBox: "AXComboBox"
+            case .radioButton: "AXRadioButton"
+            case .checkBox: "AXCheckBox"
+            case .unknown: "AXUnknown"
+            case .valueIndicator: "AXValueIndicator"
+            case .textArea: "AXTextArea"
+            case let .raw(string): string
+            }
+        }
+        
+        public init(rawValue: String) {
+            self = switch rawValue {
+            case "AXSplitGroup": .splitGroup
+            case "AXSplitter": .splitter
+            case "AXTabGroup": .tabGroup
+            case "AXGroup": .group
+            case "AXScrollArea": .scrollArea
+            case "AXWindow": .window
+            case "AXWebArea": .webArea
+            case "AXLink": .link
+            case "AXHeading": .heading
+            case "AXButton": .button
+            case "AXList": .list
+            case "AXStaticText": .staticText
+            case "AXScrollBar": .scrollBar
+            case "AXImage": .image
+            case "AXRow": .row
+            case "AXCell": .cell
+            case "AXToolbar": .toolbar
+            case "AXOpaqueProviderGroup": .opaqueProviderGroup
+            case "AXTextField": .textField
+            case "AXListMarker": .listMarker
+            case "AXPopUpButton": .popUpButton
+            case "AXColumn": .column
+            case "AXTable": .table
+            case "AXComboBox": .comboBox
+            case "AXRadioButton": .radioButton
+            case "AXCheckBox": .checkBox
+            case "AXUnknown": .unknown
+            case "AXValueIndicator": .valueIndicator
+            case "AXTextArea": .textArea
+            default: .raw(rawValue)
+            }
+        }
     }
     
 }
@@ -112,7 +228,7 @@ private extension String {
     
     static func recursiveDescription<T>(of target: T, children: (T) -> [T]?, description: (T) -> String) -> String {
         
-        var value = "─ " + description(target) + "\n"
+        var value = "─" + description(target) + "\n"
         if let _children = children(target) {
             for child in _children.dropLast() {
                 printChild(child, header: "├", into: &value, isLast: false, children: children, description: description)

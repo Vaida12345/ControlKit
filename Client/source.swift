@@ -10,18 +10,17 @@ public struct MainApp {
     
     public static func main() async throws {
         
-        let windows = try Screen.windows().first(where: { $0.owner.name == "Safari" })!
+        for window in try Screen.windows() {
+            print(window)
+        }
+        
+        let control = try Screen.windows().filter({ $0.owner.name.contains("WeChat") }).compactMap({ $0.control }).first!
         
         // Focus on the window
-        try windows.control.focus()
+        try control.focus()
+        print(control.debugDescription)
         
-        let toolbar = try windows.control.children.first(where: { $0.role == "AXToolbar" })!
-        
-        let textField = try toolbar[0][0][1][1] // Navigate to the textField. You can print the hierarchy using `toolbar.debugDescription`.
-        
-        try textField.showDefaultUI() // This could represent the UI by clicking on it. Safari would require a user to tap on it before making any adjustments
-        try textField.setValue("https://github.com/apple")
-        try textField.confirm() // This represents the default action by pressing ⏎.
+//        let staticText = try windows.control[0][1][0][0][0][0][0][0]
     }
     
 }

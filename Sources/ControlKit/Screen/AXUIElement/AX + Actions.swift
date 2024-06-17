@@ -41,6 +41,8 @@ public extension AXUIElement {
     }
     
     /// Show menu action for an element.
+    ///
+    /// This is often equivalent to right click on the element.
     @inlinable
     func showMenu() throws(AXError) {
         try self.perform(kAXShowMenuAction)
