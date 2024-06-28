@@ -79,7 +79,7 @@ public extension AXUIElement {
     
     /// The bounds of the element.
     @inlinable
-    var bounds: CGRect {
+    var frame: CGRect {
         get throws(AXError) {
             try CGRect(origin: position, size: size)
         }

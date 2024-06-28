@@ -281,7 +281,7 @@ public struct Screen {
                 
                 preparePixelQueue.sync { } // wait for the queue
                 
-                converter.convertImageToPixelBuffer(frame, pixelBuffer: pixelBuffer, size: size)
+//                converter.convertImageToPixelBuffer(frame, pixelBuffer: pixelBuffer, size: size)
 //                if size == frame.size {
 //                } else {
 //                    CVPixelBufferLockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: CVOptionFlags(0)))
@@ -290,7 +290,7 @@ public struct Screen {
 //                    
 //                    let context = CGContext(data: pixelData, width: Int(size.width), height: Int(size.height), bitsPerComponent: 8, bytesPerRow: CVPixelBufferGetBytesPerRow(pixelBuffer), space: frame.colorSpace!, bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)!
 //                    
-//                    let drawCGRect = CGRect(center: CGPoint(x: size.width / 2, y: size.height / 2), size: frame.size)
+//
 //                    
 //                    context.draw(frame, in: drawCGRect) // takes most time
 //                    

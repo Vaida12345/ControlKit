@@ -69,7 +69,7 @@ extension Screen {
             let _bounds = self.bounds
             
             for window in windowArray {
-                guard let bounds = try? window.bounds else { continue }
+                guard let bounds = try? window.frame else { continue }
                 if bounds == _bounds {
                     return window
                 }
