@@ -9,10 +9,10 @@ let package = Package(
     products: [
         .library(name: "ControlKit", targets: ["ControlKit"])
     ], dependencies: [
-        .package(url: "https://github.com/Vaida12345/GraphicsKit.git", branch: "main")
+        .package(url: "https://github.com/Vaida12345/GraphicsKit.git", from: "1.0.0")
     ], targets: [
         .target(name: "ControlKit", dependencies: ["GraphicsKit"]),
         .testTarget(name: "ControlKitTests", dependencies: ["ControlKit"]),
         .executableTarget(name: "Client", dependencies: ["ControlKit"], path: "Client")
-    ], swiftLanguageVersions: [.v6]
+    ], swiftLanguageModes: [.v6]
 )

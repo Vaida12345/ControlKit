@@ -76,7 +76,7 @@ try textField.confirm()
 `ControlKit` uses [Swift Package Manager](https://www.swift.org/documentation/package-manager/) as its build tool. If you want to import in your own project, it's as simple as adding a `dependencies` clause to your `Package.swift`:
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Vaida12345/ControlKit.git", branch: "main")
+    .package(url: "https://github.com/Vaida12345/ControlKit.git", from: "1.0.0")
 ]
 ```
 and then adding the appropriate module to your target dependencies.
@@ -90,6 +90,5 @@ https://github.com/Vaida12345/ControlKit
 
 ## Documentation
 
-The documentation is included in the package as DocC.
-<img width="1587" alt="DocC" src="https://github.com/Vaida12345/ControlKit/assets/91354917/501460f4-2cc6-4207-be8a-151b76d23e73">
+This package uses [DocC](https://www.swift.org/documentation/docc/) for documentation. [View on Github Pages](https://vaida12345.github.io/ControlKit/documentation/controlkit/)
 

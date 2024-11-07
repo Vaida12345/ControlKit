@@ -235,9 +235,6 @@ public struct Screen {
             nonisolated(unsafe)
             let produce = produce
             
-            nonisolated(unsafe)
-            let converter = MetalImageConverter()
-            
             assetWriterVideoInput.requestMediaDataWhenReady(on: mediaQueue) { [unowned self] in
                 guard assetWriterVideoInput.isReadyForMoreMediaData else { return } // go on waiting
                 guard !isFinished else {
@@ -275,7 +272,6 @@ public struct Screen {
                 while _frame == nil {
                     _frame = produce()
                 }
-                let frame = _frame!
                 
                 // Draw image into context
                 

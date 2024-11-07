@@ -46,7 +46,7 @@ This extension can be used to inspect and control ``Screen/Window``.
 
 - ``position``
 - ``size``
-- ``bounds``
+- ``frame``
 - ``move(to:)``
 - ``resize(to:)``
 
