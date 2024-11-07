@@ -1,0 +1,112 @@
+name: DocC
+on:
+  push:
+    branches:
+      - 'main'
+jobs:
+  Build_DocC:
+    runs-on: macos-latest
+
+    env:
+      # The DocC target, change this to your target.
+      DocC_Target: ControlKit
+      # on complete, the webpage is located at `https://vaida12345.github.io/<repo>/documentation/<target_lowercased>`
+      
+    steps:
+    - uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
+
+    # https://github.com/kiarashvosough1999/build-docC-static-site/blob/master/action.yml
+    - name: checkout
+      uses: actions/checkout@v4
+
+    - name: Prepare Building DocC
+      shell: bash
+      env:
+        DocC_Static_Site_Build_Ouptput_Path: ./docc_static_site
+        DocC_Derived_Data_Path_Build: ./.doc_build
+      run: |
+        mkdir $DocC_Derived_Data_Path_Build
+        mkdir $DocC_Static_Site_Build_Ouptput_Path
+
+    - name: Build DocC
+      shell: bash
+      env:
+        DocC_Static_Site_Build_Ouptput_Path: ./docc_static_site
+        DocC_Derived_Data_Path_Build: ./.doc_build
+        GITHUB_REPOSITORY: ${{ github.repository }}
+      run: |
+        Package_Name=$(basename "$PWD")
+        DocC_Find_Executable_Path=$(xcrun --find docc)
+
+        xcodebuild docbuild -scheme $DocC_Target -destination 'platform=macOS,arch=arm64' -derivedDataPath $DocC_Derived_Data_Path_Build -quiet
+
+        Docc_Generated_Archive_Path=$DocC_Derived_Data_Path_Build/Build/Products/Debug/$DocC_Target.doccarchive
+
+        REPO_NAME="${GITHUB_REPOSITORY##*/}"
+        $DocC_Find_Executable_Path process-archive transform-for-static-hosting $Docc_Generated_Archive_Path --output-path $DocC_Static_Site_Build_Ouptput_Path --hosting-base-path $REPO_NAME
+
+    - name: Archive DocC Generated Site Artifact
+      shell: bash
+      env:
+        DocC_Static_Site_Build_Ouptput_Path: ./docc_static_site
+        Zipped_Site_Output_Directory: ${{ runner.temp }}/doccarchive.tar
+      run: |
+        gtar --dereference --hard-dereference --directory $DocC_Static_Site_Build_Ouptput_Path -cvf $Zipped_Site_Output_Directory --exclude=.git --exclude=.github .
+
+    - name: Upload DocC Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: doccarchive
+        path: ${{ runner.temp }}/doccarchive.tar
+        retention-days: 1
+        if-no-files-found: error
+        
+  # https://github.com/kiarashvosough1999/docC-github-pages-deploy/blob/master/action.yml
+  Deploy_DocC:
+    runs-on: ubuntu-latest
+    needs: Build_DocC
+   
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+  
+    permissions:
+      pages: write
+      contents: read
+      id-token: write
+      
+    steps:
+      - name: Download a DocC Generated Static Site Zipped artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: doccarchive
+  
+      - name: Unarchive Artifact
+        shell: bash
+        run: |
+          mkdir doccarchive
+          tar -xf doccarchive.tar -C ./doccarchive
+  
+      - name: Build Static Site With Jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./doccarchive/
+          destination: ./doccarchive/__site
+  
+      - name: Upload Static Site Artifacts
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./doccarchive/__site
+          retention-days: 1
+  
+      - name: Deploy To Pages
+        id: deploy-step
+        uses: actions/deploy-pages@v4
+        with:
+          timeout: 600000
+          error_count: 10
+          reporting_interval: 5000
+          artifact_name: github-pages
+           
