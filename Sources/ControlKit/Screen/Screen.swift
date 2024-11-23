@@ -235,6 +235,9 @@ public struct Screen {
             nonisolated(unsafe)
             let produce = produce
             
+            nonisolated(unsafe)
+            let converter = MetalImageConverter()
+            
             assetWriterVideoInput.requestMediaDataWhenReady(on: mediaQueue) { [unowned self] in
                 guard assetWriterVideoInput.isReadyForMoreMediaData else { return } // go on waiting
                 guard !isFinished else {
@@ -272,26 +275,13 @@ public struct Screen {
                 while _frame == nil {
                     _frame = produce()
                 }
+                let frame = _frame!
                 
                 // Draw image into context
                 
                 preparePixelQueue.sync { } // wait for the queue
                 
-//                converter.convertImageToPixelBuffer(frame, pixelBuffer: pixelBuffer, size: size)
-//                if size == frame.size {
-//                } else {
-//                    CVPixelBufferLockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: CVOptionFlags(0)))
-//                    
-//                    let pixelData = CVPixelBufferGetBaseAddress(pixelBuffer)
-//                    
-//                    let context = CGContext(data: pixelData, width: Int(size.width), height: Int(size.height), bitsPerComponent: 8, bytesPerRow: CVPixelBufferGetBytesPerRow(pixelBuffer), space: frame.colorSpace!, bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)!
-//                    
-//
-//                    
-//                    context.draw(frame, in: drawCGRect) // takes most time
-//                    
-//                    CVPixelBufferUnlockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: CVOptionFlags(0)))
-//                }
+                converter.convertImageToPixelBuffer(frame, pixelBuffer: pixelBuffer, size: size)
                 
                 assert(assetWriter.status == .writing)
                 assert(assetWriterVideoInput.isReadyForMoreMediaData)

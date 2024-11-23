@@ -10,7 +10,9 @@ public struct MainApp {
     
     public static func main() async throws {
         
-        try await Mouse.drag(from: CGPoint(x: 400, y: 400), to: CGPoint(x: 500, y: 500))
+        let writer = try Screen.record(to: .desktopDirectory.appending(path: "file.m4v"))
+        try await Task.sleep(for: .seconds(2))
+        try await writer.finish()
         
     }
     
