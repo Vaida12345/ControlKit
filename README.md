@@ -49,7 +49,7 @@ try windows.control.move(to: .zero)
 
 ### Complex Operations
 
-This would open [github.com/apple](https://github.com/apple) on the active Safari tab.
+This would open [github.com/apple](https://www.github.com/apple) on the active Safari tab.
         
 ```swift
 let windows = try Screen.windows().first(where: { $0.owner.name == "Safari" })!
@@ -64,7 +64,7 @@ let textField = try toolbar[0][0][1][1]
 
 // This could represent the UI by clicking on it. Safari would require a user to tap on it before making any adjustments
 try textField.showDefaultUI() 
-try textField.setValue("https://github.com/apple")
+try textField.setValue("https://www.github.com/apple")
 
 // This represents the default action by pressing ⏎.
 try textField.confirm() 
@@ -76,7 +76,7 @@ try textField.confirm()
 `ControlKit` uses [Swift Package Manager](https://www.swift.org/documentation/package-manager/) as its build tool. If you want to import in your own project, it's as simple as adding a `dependencies` clause to your `Package.swift`:
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Vaida12345/ControlKit", from: "1.0.0")
+    .package(url: "https://www.github.com/Vaida12345/ControlKit", from: "1.0.0")
 ]
 ```
 and then adding the appropriate module to your target dependencies.
@@ -85,7 +85,7 @@ and then adding the appropriate module to your target dependencies.
 
 You can add this framework as a dependency to your Xcode project by clicking File -> Swift Packages -> Add Package Dependency. The package is located at:
 ```
-https://github.com/Vaida12345/ControlKit
+https://www.github.com/Vaida12345/ControlKit
 ```
 
 ## Documentation

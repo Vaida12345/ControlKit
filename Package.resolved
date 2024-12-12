@@ -4,7 +4,7 @@
     {
       "identity" : "essentials",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/Vaida12345/Essentials",
+      "location" : "https://www.github.com/Vaida12345/Essentials",
       "state" : {
         "revision" : "9e0d2855be364469b3e11aac887d6712c3350b1e",
         "version" : "1.0.0"
@@ -13,7 +13,7 @@
     {
       "identity" : "finderitem",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/Vaida12345/FinderItem",
+      "location" : "https://www.github.com/Vaida12345/FinderItem",
       "state" : {
         "revision" : "794167cc1ee6f2ba2a6f9951d75ad4bc7a975798",
         "version" : "1.0.0"
@@ -22,7 +22,7 @@
     {
       "identity" : "nativeimage",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/Vaida12345/NativeImage.git",
+      "location" : "https://www.github.com/Vaida12345/NativeImage.git",
       "state" : {
         "revision" : "7e51defc3ed3c0aa74e7bcc13101a0d60526a276",
         "version" : "1.0.0"
