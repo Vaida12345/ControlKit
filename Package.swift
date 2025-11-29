@@ -9,10 +9,10 @@ let package = Package(
     products: [
         .library(name: "ControlKit", targets: ["ControlKit"])
     ], dependencies: [
-        .package(url: "https://www.github.com/Vaida12345/NativeImage", from: "1.0.0")
+        .package(url: "https://github.com/Vaida12345/NativeImage.git", from: "1.0.0")
     ], targets: [
         .target(name: "ControlKit", dependencies: ["NativeImage"]),
         .testTarget(name: "ControlKitTests", dependencies: ["ControlKit"]),
         .executableTarget(name: "Client", dependencies: ["ControlKit"], path: "Client")
-    ], swiftLanguageModes: [.v6]
+    ]
 )

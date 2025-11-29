@@ -23,7 +23,7 @@ import Foundation
 ///
 /// - Returns: If the `command` does not produce any results, it returns an empty `String`.
 @discardableResult
-public func execute(_ command: String...) throws -> String {
+func execute(_ command: String...) throws -> String {
     let commands = command.joined(separator: "; ")
     
     let process = Process()

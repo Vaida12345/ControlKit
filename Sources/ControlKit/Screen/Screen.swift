@@ -381,7 +381,7 @@ public struct Screen {
             var failureReason: String? {
                 switch self {
                 case .pixelBufferPoolNil:
-                    return "Pixel buffer pool is nil after starting writing session, this typically means you do not have permission to write to the given file"
+                    return "Pixel buffer pool is nil after starting writing session, this typically means you do not have permission to write to the given file, or a file with the same name already exists."
                 case .cannotCreateCGContext:
                     return "Cannot create CGContext for a frame"
                 }
