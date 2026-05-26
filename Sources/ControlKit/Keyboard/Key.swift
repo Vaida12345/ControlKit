@@ -123,7 +123,7 @@ public struct Key: ExpressibleByStringLiteral, ExpressibleByIntegerLiteral, Send
     public static let tab = Key(keyCode: 48)
     
     /// The *Esc* Key. The key code is 53 (0x35)
-    public static let escape = Key(keyCode: 48)
+    public static let escape = Key(keyCode: 53)
     
     /// The *Command* Key.
     ///
@@ -326,7 +326,7 @@ public struct Key: ExpressibleByStringLiteral, ExpressibleByIntegerLiteral, Send
         
         public init(integerLiteral value: UInt16) {
             precondition(value <= 9, "Value \(value) is not representable on the number pad.")
-            let code = value - 0x52
+            let code = 0x52 + value
             self.init(keyCode: code)
         }
         
@@ -334,7 +334,7 @@ public struct Key: ExpressibleByStringLiteral, ExpressibleByIntegerLiteral, Send
             precondition(value.count == 1, "StringLiteral \(value) exceeds a NumberPad could contain")
             let character = value.first!
             precondition(character.isASCII, "Character \(character) exceeds a NumberPad could contain: Not ASCII")
-            if let index = Key.characters[character] {
+            if let index = NumberPad.characters[character] {
                 self.init(keyCode: index)
             } else {
                 fatalError("Character \(character) exceeds a NumberPad could contain: It is not in the predefined set")

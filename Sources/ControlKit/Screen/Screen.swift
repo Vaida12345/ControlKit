@@ -85,7 +85,7 @@ public struct Screen {
             throw ObtainWindowsError.noWindowList
         }
         
-        return windowList.map(Window.init)
+        return windowList.compactMap { try? Window(info: $0) }
     }
     
     /// Captures the image of a window.
@@ -115,7 +115,9 @@ public struct Screen {
     ///
     /// To obtain a list of displays, use ``displays(of:maxDisplays:)``.
     public static func record(_ display: Display = .main, target: CGRect? = nil, to destination: URL, codec: AVVideoCodecType = .hevc) throws -> VideoWriter {
-        let firstFrame = capture(display, target: target)!
+        guard let firstFrame = capture(display, target: target) else {
+            throw RecordError.captureFailed
+        }
         return try VideoWriter(produce: { capture(display, target: target) }, size: firstFrame.size, to: destination)
     }
     
@@ -171,7 +173,9 @@ public struct Screen {
         if let size {
             return try VideoWriter(produce: { capture(window, imageOption: imageOption) }, size: size, to: destination, codec: codec)
         } else {
-            let firstFrame = capture(window, imageOption: imageOption)!
+            guard let firstFrame = capture(window, imageOption: imageOption) else {
+                throw RecordError.captureFailed
+            }
             return try VideoWriter(produce: { capture(window, imageOption: imageOption) }, size: firstFrame.size, to: destination, codec: codec)
         }
     }
@@ -236,7 +240,7 @@ public struct Screen {
             let produce = produce
             
             nonisolated(unsafe)
-            let converter = MetalImageConverter()
+            let converter = try MetalImageConverter()
             
             assetWriterVideoInput.requestMediaDataWhenReady(on: mediaQueue) { [unowned self] in
                 guard assetWriterVideoInput.isReadyForMoreMediaData else { return } // go on waiting
@@ -272,7 +276,16 @@ public struct Screen {
                 
                 // Produce
                 var _frame = produce()
+                var attempts = 0
                 while _frame == nil {
+                    if attempts >= 100 {
+                        isFinished = true
+                        assetWriterVideoInput.markAsFinished()
+                        pixelBufferPointer.deallocate()
+                        return
+                    }
+                    attempts += 1
+                    Thread.sleep(forTimeInterval: 0.01)
                     _frame = produce()
                 }
                 let frame = _frame!
@@ -292,10 +305,11 @@ public struct Screen {
         
         /// Finish the reading and writing stream, and wait for completes.
         public func finish() async throws {
-            isFinished = true
-            mediaQueue.sync { }
+            mediaQueue.sync {
+                isFinished = true
+            }
             await assetWriter.finishWriting()
-            
+
             guard assetWriter.error == nil else { throw assetWriter.error! }
         }
         
@@ -303,45 +317,54 @@ public struct Screen {
             private let device: MTLDevice
             private let commandQueue: MTLCommandQueue
             private let textureLoader: MTKTextureLoader
-            
-            init() {
-                self.device = MTLCreateSystemDefaultDevice()!
-                self.commandQueue = self.device.makeCommandQueue()!
-                self.textureLoader = MTKTextureLoader(device: self.device)
+
+            init() throws {
+                guard let device = MTLCreateSystemDefaultDevice(),
+                      let commandQueue = device.makeCommandQueue() else {
+                    throw ConvertImagesToVideoError.metalSetupFailed
+                }
+                self.device = device
+                self.commandQueue = commandQueue
+                self.textureLoader = MTKTextureLoader(device: device)
             }
             
             func convertImageToPixelBuffer(_ image: CGImage, pixelBuffer: CVPixelBuffer?, size: CGSize)  {
-                let texture = try! textureLoader.newTexture(cgImage: image, options: nil)
-                
+                guard let texture = try? textureLoader.newTexture(cgImage: image, options: nil) else { return }
+
                 let buffer = pixelBuffer!
-                
+
                 CVPixelBufferLockBaseAddress(buffer, CVPixelBufferLockFlags(rawValue: CVOptionFlags(0)))
                 defer {
                     CVPixelBufferUnlockBaseAddress(buffer, CVPixelBufferLockFlags(rawValue: CVOptionFlags(0)))
                 }
-                
+
                 let textureDescriptor = MTLTextureDescriptor.texture2DDescriptor(
                     pixelFormat: .bgra8Unorm,
                     width: Int(size.width),
                     height: Int(size.height),
                     mipmapped: false
                 )
-                
+
                 textureDescriptor.usage = [.shaderWrite, .shaderRead]
-                
-                let textureFromBuffer = device.makeTexture(
-                    descriptor: textureDescriptor,
-                    iosurface: CVPixelBufferGetIOSurface(buffer)!.takeUnretainedValue(),
-                    plane: 0)!
-                
+
+                guard let ioSurface = CVPixelBufferGetIOSurface(buffer)?.takeUnretainedValue(),
+                      let textureFromBuffer = device.makeTexture(
+                        descriptor: textureDescriptor,
+                        iosurface: ioSurface,
+                        plane: 0) else { return }
+
                 let commandBuffer = commandQueue.makeCommandBuffer()!
                 let blitEncoder = commandBuffer.makeBlitCommandEncoder()!
                 
                 var drawCGRect = CGRect(center: CGPoint(x: image.size.width / 2, y: image.size.height / 2), size: size)
-                
-                if drawCGRect.origin == CGPoint(x: 44, y: 44) {
-                    // caused by focus, use auto correct
-                    drawCGRect.origin.y -= 20
+
+                // A window that has been focused (brought to front) on macOS reports
+                // its origin as (44, 44) for the first capture frame due to the
+                // window-server focus animation.  The true content origin is (44, 24).
+                let focusAnimationOrigin = CGPoint(x: 44, y: 44)
+                let focusAnimationOffsetY: CGFloat = 20
+                if drawCGRect.origin == focusAnimationOrigin {
+                    drawCGRect.origin.y -= focusAnimationOffsetY
                 }
                 
                 blitEncoder.copy(
@@ -365,28 +388,32 @@ public struct Screen {
         }
         
         private enum ConvertImagesToVideoError: LocalizedError, CustomStringConvertible {
-            
+
             case pixelBufferPoolNil
-            
+
             case cannotCreateCGContext
-            
-            
+
+            case metalSetupFailed
+
+
             var description: String {
                 "\(errorDescription!): \(failureReason!)"
             }
-            
-            
+
+
             var errorDescription: String? { "Convert images to video error" }
-            
+
             var failureReason: String? {
                 switch self {
                 case .pixelBufferPoolNil:
                     return "Pixel buffer pool is nil after starting writing session, this typically means you do not have permission to write to the given file, or a file with the same name already exists."
                 case .cannotCreateCGContext:
                     return "Cannot create CGContext for a frame"
+                case .metalSetupFailed:
+                    return "Metal is not available on this device or the command queue could not be created."
                 }
             }
-            
+
         }
         
     }
@@ -402,13 +429,20 @@ public struct Screen {
     }
     
     
+    public enum RecordError: Error {
+        case captureFailed
+    }
+
     public enum ObtainWindowsError: Error {
         case noWindowList
+        case invalidWindowInfo
     }
     
 }
 
 
+extension CGError: @retroactive _BridgedNSError {}
+extension CGError: @retroactive _ObjectiveCBridgeableError {}
 extension CGError: @retroactive Error {
     
 }

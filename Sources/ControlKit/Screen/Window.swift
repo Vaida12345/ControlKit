@@ -93,27 +93,38 @@ extension Screen {
         }
         
         
-        internal init(info: [CFString: Any]) {
-            self.id = CGWindowID(truncating: info[kCGWindowNumber] as! NSNumber)
-            self.hasAlpha = (info[kCGWindowAlpha] as! NSNumber) == 1
-            self.isSharing = (info[kCGWindowSharingState] as! NSNumber) == 1
+        internal init(info: [CFString: Any]) throws {
+            guard let windowNumber = info[kCGWindowNumber] as? NSNumber,
+                  let alpha = info[kCGWindowAlpha] as? NSNumber,
+                  let sharing = info[kCGWindowSharingState] as? NSNumber,
+                  let memory = info[kCGWindowMemoryUsage] as? NSNumber,
+                  let layer = info[kCGWindowLayer] as? NSNumber,
+                  let store = info[kCGWindowStoreType] as? NSNumber,
+                  let ownerName = info[kCGWindowOwnerName] as? NSString,
+                  let ownerPID = info[kCGWindowOwnerPID] as? NSNumber,
+                  let boundsDict = info[kCGWindowBounds] as? [NSString: NSNumber],
+                  let x = boundsDict["X"],
+                  let y = boundsDict["Y"],
+                  let width = boundsDict["Width"],
+                  let height = boundsDict["Height"]
+            else {
+                throw ObtainWindowsError.invalidWindowInfo
+            }
+
+            self.id = CGWindowID(truncating: windowNumber)
+            self.hasAlpha = alpha == 1
+            self.isSharing = sharing == 1
             self.isOnScreen = (info[kCGWindowIsOnscreen] as? NSNumber).map { $0 == 1 } ?? false
-            self.memoryUsage = Int(truncating: info[kCGWindowMemoryUsage] as! NSNumber)
-            self.layer = Int(truncating: info[kCGWindowLayer] as! NSNumber)
-            self.storeType = info[kCGWindowStoreType] as! NSNumber
-            
-            let ownerName = (info[kCGWindowOwnerName] as! NSString) as String
-            let ownerPID = Int(truncating: info[kCGWindowOwnerPID] as! NSNumber)
-            self.owner = Owner(name: ownerName, pid: ownerPID)
-            
-            let bounds = info[kCGWindowBounds] as! [NSString: NSNumber]
+            self.memoryUsage = Int(truncating: memory)
+            self.layer = Int(truncating: layer)
+            self.storeType = store
+            self.owner = Owner(name: ownerName as String, pid: Int(truncating: ownerPID))
             self.bounds = CGRect(
-                x: Int(truncating: bounds["X"]!),
-                y: Int(truncating: bounds["Y"]!),
-                width: Int(truncating: bounds["Width"]!),
-                height: Int(truncating: bounds["Height"]!)
+                x: Int(truncating: x),
+                y: Int(truncating: y),
+                width: Int(truncating: width),
+                height: Int(truncating: height)
             )
-            
             self.name = (info[kCGWindowName] as? NSString) as? String
         }
         

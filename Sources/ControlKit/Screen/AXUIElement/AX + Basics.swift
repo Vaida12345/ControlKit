@@ -16,8 +16,8 @@ public extension AXUIElement {
     /// This string is for identification purposes only and does not need to be localized.
     @inlinable
     var role: Role {
-        get {
-            let rawValue = try! self.attribute(for: kAXRoleAttribute, as: String.self)
+        get throws(AXError) {
+            let rawValue = try self.attribute(for: kAXRoleAttribute, as: String.self)
             return Role(rawValue: rawValue)
         }
     }

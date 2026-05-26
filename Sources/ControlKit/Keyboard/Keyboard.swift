@@ -16,7 +16,7 @@ public struct Keyboard {
     /// The predefined interval between key strokes.
     @inlinable
     public static var interval: Duration {
-        .microseconds(5)
+        .milliseconds(50)
     }
     
     /// Press a key

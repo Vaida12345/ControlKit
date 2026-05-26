@@ -67,7 +67,7 @@ public extension AXUIElement {
 extension AXUIElement: @retroactive CustomStringConvertible {
     
     public var description: String {
-        let role = self.role
+        let role = (try? self.role) ?? .unknown
         
         var description = ""
         if let title = try? self.title,
@@ -300,6 +300,8 @@ private extension String {
 }
 
 
+extension AXError: @retroactive _BridgedNSError {}
+extension AXError: @retroactive _ObjectiveCBridgeableError {}
 extension AXError: @retroactive Error, @retroactive CustomStringConvertible {
     
     public var description: String {
@@ -353,7 +355,7 @@ extension AXError: @retroactive Error, @retroactive CustomStringConvertible {
             return "AXError.notEnoughPrecision: Not enough precision. "
             
         default:
-            fatalError("Unknown AXError code: \(rawValue)")
+            return "AXError(\(rawValue))"
         }
     }
     

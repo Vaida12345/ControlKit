@@ -129,10 +129,6 @@ https://www.github.com/Vaida12345/ControlKit
 
 - ``ApplicationServices/AXUIElement``
 
-### Working with Terminal 
-
-- ``execute(_:)``
-
 ### Imported from GraphicsKit
 
 - ``NativeImage``
